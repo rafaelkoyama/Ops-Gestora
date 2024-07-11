@@ -1575,7 +1575,9 @@ class DadosBoletimB3:
         if not self.funcoes_pytools.checkFileExists(str_file):
             self.result_csv['Negócios Bancão RF'] = "Arquivo não encontrado"
 
-        df = pd.read_csv(str_file, skiprows=8, skipfooter=1, engine='python', sep=';', decimal=',')
+        skip_row = self.funcoes_pytools.find_header_row(str_file, 'Data Negócio')
+
+        df = pd.read_csv(str_file, skiprows=skip_row, skipfooter=1, engine='python', sep=';', decimal=',')
 
         df.rename(columns = {
             'Instrumento Financeiro': 'TIPO_ATIVO',
@@ -1618,6 +1620,7 @@ class DadosBoletimB3:
         df['QUANTIDADE'] = df['QUANTIDADE'].astype(int)
         df['ISIN'] = df['ISIN'].apply(lambda x: None if x in ['-', '0'] else x)
         df['ID_B3'] = df['ID_B3'].apply(lambda x: None if x in ['-', '0'] else x)
+        df['FINANCEIRO'] = df['FINANCEIRO'].apply(lambda x: None if x in ['-'] else float(x))
         df = df.sort_values(by=['REFDATE', 'HORARIO_NEGOCIADO']).reset_index(drop=True)
 
         self.df_negociosbalcao_rf = df.copy()
