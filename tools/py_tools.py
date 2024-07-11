@@ -1,10 +1,4 @@
-import os
-
-from dotenv import load_dotenv
-
-load_dotenv(
-    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
-)
+from __init__ import *
 
 VERSION_APP = "1.1.3"
 VERSION_REFDATE = "2024-07-08"
@@ -14,6 +8,8 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
+# -----------------------------------------------------------------------
+
 from datetime import date, datetime, timedelta
 from math import trunc
 
@@ -22,6 +18,7 @@ from dateutil.relativedelta import relativedelta
 from db_helper import SQL_Manager
 from my_logger import Logger
 
+# -----------------------------------------------------------------------
 
 class FuncoesPyTools:
 

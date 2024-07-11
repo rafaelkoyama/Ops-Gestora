@@ -1,10 +1,4 @@
-import os
-
-from dotenv import load_dotenv
-
-load_dotenv(
-    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
-)
+from __init__ import *
 
 VERSION_APP = "2.0.1"
 VERSION_REFDATE = "2024-07-05"
@@ -14,11 +8,15 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
+# -----------------------------------------------------------------------
+
 import urllib
 from datetime import date, datetime
 
 import pandas as pd
 from sqlalchemy import create_engine, text
+
+# -----------------------------------------------------------------------
 
 
 class SQL_Manager:
@@ -75,13 +73,10 @@ class SQL_Manager:
         except Exception as e:
             return e
 
-    def insert_dataframe(self, df: pd.DataFrame, table_name: str):
-        self.check_connection()
-        try:
-            df.to_sql(table_name, con=self.engine, if_exists="append", index=False)
-            return True
-        except Exception as e:
-            return e
+    def insert_dataframe(self, df, table_name, chunk_size=10000):
+        chunks = [df[i : i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
+        for chunk in chunks:
+            chunk.to_sql(table_name, con=self.engine, if_exists="append", index=False)
 
     def check_if_data_exists(self, query: str):
         self.check_connection()
