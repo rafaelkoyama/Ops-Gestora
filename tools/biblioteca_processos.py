@@ -8,8 +8,6 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
-append_paths()
-
 #-----------------------------------------------------------------------
 
 from datetime import date, datetime

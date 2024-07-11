@@ -1,10 +1,4 @@
-import os
-
-from dotenv import load_dotenv
-
-load_dotenv(
-    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
-)
+from __init__ import *
 
 VERSION_APP = "2.0.1"
 VERSION_REFDATE = "2024-07-05"
@@ -14,11 +8,15 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
+# -----------------------------------------------------------------------
+
 import urllib
 from datetime import date, datetime
 
 import pandas as pd
 from sqlalchemy import create_engine, text
+
+# -----------------------------------------------------------------------
 
 
 class SQL_Manager:
