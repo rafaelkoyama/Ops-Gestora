@@ -1545,3 +1545,95 @@ class RentabilidadeAtivos:
         self.trabalha_dados_ccbs()
         self.base_rentabilidade_ccbs()
         self.upload_base_rentabilidade(self.df_rent_ccbs, "CCB")
+
+
+class DadosBoletimB3:
+
+    def __init__(self, manager_sql=None, funcoes_pytools=None):
+
+        if manager_sql is None:
+            self.manager_sql = SQL_Manager()
+        else:
+            self.manager_sql = manager_sql
+
+        if funcoes_pytools is None:
+            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
+        else:
+            self.funcoes_pytools = funcoes_pytools
+
+        self.refdate = None
+        self.df_negociosbalcao_rf = pd.DataFrame()
+        self.result_csv = {}
+        self.result_sql = {}
+
+    def set_refdate(self, refdate: date):
+
+        self.refdate = refdate
+
+    def read_csv_negocios_balcao_rf(self, str_file: str):
+
+        if not self.funcoes_pytools.checkFileExists(str_file):
+            self.result_csv['Negócios Bancão RF'] = "Arquivo não encontrado"
+
+        df = pd.read_csv(str_file, skiprows=8, skipfooter=1, engine='python', sep=';', decimal=',')
+
+        df.rename(columns = {
+            'Instrumento Financeiro': 'TIPO_ATIVO',
+            'Emissor': 'EMISSOR',
+            'Código IF': 'COD_IF',
+            'Quantidade Negociada': 'QUANTIDADE',
+            'Preço Negócio': 'PRECO',
+            'Volume Financeiro (R$)': 'FINANCEIRO',
+            'Taxa Negócio': 'TAXA',
+            'Origem Negócio': 'ORIGEM',
+            'Horário Negócio': 'HORARIO_NEGOCIADO',
+            'Data Negócio': 'REFDATE',
+            'Cód. Identificador do Negócio': 'ID_B3',
+            'Código ISIN': 'ISIN',
+            'Data Liquidação': 'DATA_LIQUIDACAO',
+            'Situação Negócio': 'STATUS'
+            }, inplace=True)
+
+        df = df[[
+            'REFDATE',
+            'STATUS',
+            'TIPO_ATIVO',
+            'COD_IF',
+            'EMISSOR',
+            'TAXA',
+            'QUANTIDADE',
+            'PRECO',
+            'FINANCEIRO',
+            'HORARIO_NEGOCIADO',
+            'DATA_LIQUIDACAO',
+            'ISIN',
+            'ORIGEM',
+            'ID_B3'
+            ]]
+        
+        df['HORARIO_NEGOCIADO'] = pd.to_datetime(df['HORARIO_NEGOCIADO'], format='%H:%M:%S').dt.time
+        df['DATA_LIQUIDACAO'] = pd.to_datetime(df['DATA_LIQUIDACAO'], format='%d/%m/%Y').dt.date
+        df['REFDATE'] = pd.to_datetime(df['REFDATE'], format='%d/%m/%Y').dt.date
+        df['TAXA'] = df['TAXA'].apply(lambda x: None if x == '-' else float(x))
+        df['QUANTIDADE'] = df['QUANTIDADE'].astype(int)
+        df['ISIN'] = df['ISIN'].apply(lambda x: None if x in ['-', '0'] else x)
+        df['ID_B3'] = df['ID_B3'].apply(lambda x: None if x in ['-', '0'] else x)
+        df = df.sort_values(by=['REFDATE', 'HORARIO_NEGOCIADO']).reset_index(drop=True)
+
+        self.df_negociosbalcao_rf = df.copy()
+        self.result_csv['Negócios Bancão RF'] = "CSV lido com sucesso"
+
+    def upload_to_sql(self):
+
+        if self.df_negociosbalcao_rf.empty:
+            self.result_sql['Negócios Bancão RF'] = "Sem dados para upload"
+        else:
+            str_refdates = "', '".join(self.df_negociosbalcao_rf['REFDATE'].unique().astype(str).tolist())
+
+            self.manager_sql.delete_records(
+                table_name="TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA",
+                condition=f"REFDATE IN ('{str_refdates}')"
+            )
+
+            resp = self.manager_sql.insert_dataframe(df=self.df_negociosbalcao_rf, table_name="TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA")
+            self.result_sql['Negócios Bancão RF'] = resp

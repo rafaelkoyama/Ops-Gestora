@@ -73,13 +73,10 @@ class SQL_Manager:
         except Exception as e:
             return e
 
-    def insert_dataframe(self, df: pd.DataFrame, table_name: str):
-        self.check_connection()
-        try:
-            df.to_sql(table_name, con=self.engine, if_exists="append", index=False)
-            return True
-        except Exception as e:
-            return e
+    def insert_dataframe(self, df, table_name, chunk_size=10000):
+        chunks = [df[i : i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
+        for chunk in chunks:
+            chunk.to_sql(table_name, con=self.engine, if_exists="append", index=False)
 
     def check_if_data_exists(self, query: str):
         self.check_connection()
