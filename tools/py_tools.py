@@ -229,6 +229,12 @@ class FuncoesPyTools:
     def checkFileExists(self, path):
         return os.path.exists(path)
 
+    def find_header_row(self, file_path, header_name):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for i, line in enumerate(file):
+                if header_name in line:
+                    return i
+
 class ProcessManagerOutlook:
 
     def __init__(self, app):
