@@ -23,7 +23,6 @@ from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
 from ttkbootstrap.tableview import Tableview
 
 from btg_faas.new_btg_api_reports import BTGReports
-from controlPanel.biblioteca_processos import UpdateIndexadores, UploadArquivosXML
 from controlPanel.biblioteca_widgets import (
     newBooleanVar,
     newButton,
@@ -50,6 +49,7 @@ from controlPanel.webScrapping import (
     openEdgeDriver,
 )
 from risco.calculadoraRisco import calculadoraAtivos
+from tools.biblioteca_processos import UpdateIndexadores, UploadArquivosXML
 from tools.db_helper import SQL_Manager
 from tools.my_logger import Logger
 from tools.py_tools import FuncoesPyTools, OutlookHandler
