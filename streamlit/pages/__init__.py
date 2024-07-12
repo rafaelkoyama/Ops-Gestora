@@ -28,7 +28,6 @@ def append_paths():
     for folder in list_folders:
         if os.path.exists(os.path.join(base_path, folder)):
             sys.path.append(os.path.join(base_path, folder))
-            print(os.path.join(base_path, folder))
 
 
 str_user = os.getlogin()

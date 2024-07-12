@@ -451,15 +451,15 @@ class enquadramentoCarteira:
 
 class dadosRiscoFundos:
 
-    def __init__(self, strFundo, manager_sql=None):
+    def __init__(self, strFundo: str = None, manager_sql=None):
 
         if manager_sql is None:
-            self.manager = SQL_Manager()
+            self.manager_sql = SQL_Manager()
         else:
-            self.manager = manager_sql
+            self.manager_sql = manager_sql
 
         self.fundo = strFundo
-        self.df_suporte_dados = self.suporte_dados()
+
         self.dict_suporte = {
             "IMABAJUST": "IPCA + Yield IMA-B",
             "CDI": "CDI",
@@ -467,19 +467,26 @@ class dadosRiscoFundos:
             "STRIX FIA": "IMABAJUST",
         }
 
+    def set_refdate(self, refdate: date):
+
+        self.refdate = refdate
+
+    def set_suporte_dados(self):
+
+        self.df_suporte_dados = self.manager_sql.select_dataframe(
+            f"SELECT REFDATE, COTA_LIQUIDA, VAR_COTA_DIA/100 AS VAR_COTA_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA "
+            f"WHERE FUNDO = '{self.fundo}' AND REFDATE <= '{self.refdate}' "
+            f"ORDER BY REFDATE"
+        )
+
     def to_percent(self, y, position):
         s = f"{100 * y:.1f}%"
         return s
 
-    def suporte_dados(self):
-        self.df_suporte_dados = self.manager.select_dataframe(
-            f"SELECT REFDATE, COTA_LIQUIDA, VAR_COTA_DIA/100 AS VAR_COTA_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}' order by refdate"
-        )
-        return self.df_suporte_dados
-
     def df_drawdown_fundo(self):
 
-        df_dados = self.df_suporte_dados[["REFDATE", "COTA_LIQUIDA"]]
+        df_dados = self.df_suporte_dados[["REFDATE", "COTA_LIQUIDA"]].copy()
+
         from collections import defaultdict
 
         lista_cotas = df_dados.values.tolist()
@@ -503,6 +510,7 @@ class dadosRiscoFundos:
     def grafico_drawdown_fundo(self, tamanho_fig=(12, 6)):
 
         df_dados = self.df_drawdown_fundo()
+
         lista_dados = df_dados.values.tolist()
 
         datas = [row[0].strftime("%Y-%m-%d") for row in lista_dados]
@@ -535,7 +543,7 @@ class dadosRiscoFundos:
 
     def grafico_dispersao_x_normal(self, tamanho_fig=(12, 6)):
 
-        df_dados = self.df_suporte_dados
+        df_dados = self.df_suporte_dados.copy()
 
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
@@ -585,7 +593,7 @@ class dadosRiscoFundos:
 
     def df_volatilidade_anualizada(self, window=21):
 
-        df = self.df_suporte_dados
+        df = self.df_suporte_dados.copy()
 
         if df["VAR_COTA_DIA"].iloc[0] == 0:
             df = df.drop(index=0).reset_index(drop=True)
@@ -655,9 +663,8 @@ class dadosRiscoFundos:
 
     def rentabilidade_acumulada_fundo(self):
 
-        df_fundo = self.manager.select_dataframe(
-            f"SELECT DISTINCT REFDATE, COTA_LIQUIDA FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}' ORDER BY REFDATE"
-        )
+        df_fundo = self.df_suporte_dados[["REFDATE", "COTA_LIQUIDA"]].copy()
+
         df_fundo["REFDATE"] = pd.to_datetime(df_fundo["REFDATE"])
         df_fundo["RENTABILIDADE_ACUMULADA"] = (
             df_fundo["COTA_LIQUIDA"] / df_fundo["COTA_LIQUIDA"].iloc[0] - 1
@@ -667,8 +674,12 @@ class dadosRiscoFundos:
 
     def rentabilidade_acumulada_benchmark(self):
 
-        df_benchmark = self.manager.select_dataframe(
-            f"SELECT DISTINCT REFDATE, COTA_INDEXADOR FROM TB_INDEXADORES WHERE REFDATE >= (SELECT MIN(REFDATE) FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}') AND INDEXADOR = '{self.dict_suporte[self.fundo]}' ORDER BY REFDATE"
+        df_benchmark = self.manager_sql.select_dataframe(
+            f"SELECT DISTINCT REFDATE, COTA_INDEXADOR FROM TB_INDEXADORES "
+            f"WHERE REFDATE >= (SELECT MIN(REFDATE) FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}') "
+            f"AND REFDATE <= '{self.refdate}' "
+            f"AND INDEXADOR = '{self.dict_suporte[self.fundo]}' "
+            f"ORDER BY REFDATE"
         )
         df_benchmark["REFDATE"] = pd.to_datetime(df_benchmark["REFDATE"])
         df_benchmark["RENTABILIDADE_ACUMULADA"] = (
@@ -751,7 +762,9 @@ class dadosRiscoFundos:
         return plt
 
     def var_parametrico(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         results = df_dados["VAR_COTA_DIA"].values.tolist()
@@ -767,7 +780,7 @@ class dadosRiscoFundos:
 
     def var_historico(self):
 
-        df_dados = self.df_suporte_dados
+        df_dados = self.df_suporte_dados.copy()
 
         df_var_hist = df_dados
         if df_var_hist["VAR_COTA_DIA"].iloc[0] == 0:
@@ -789,21 +802,27 @@ class dadosRiscoFundos:
             return var * 100
 
     def diasPositivos(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         dias_positivos = df_dados.query("VAR_COTA_DIA > 0").shape[0]
         return dias_positivos
 
     def diasNegativos(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         dias_negativos = df_dados.query("VAR_COTA_DIA < 0").shape[0]
         return dias_negativos
 
     def maioresRentabilidades(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         df_maiores_rents = (
@@ -824,7 +843,9 @@ class dadosRiscoFundos:
         return df_maiores_rents
 
     def menoresRentabilidades(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         df_menores_rents = (
