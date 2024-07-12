@@ -17,9 +17,10 @@ from io import BytesIO
 
 import pandas as pd
 import streamlit as st
-from db_helper import SQL_Manager
-from py_tools import FuncoesPyTools
-from relatoriosRisco import enquadramentoCarteira
+
+from risco.relatoriosRisco import enquadramentoCarteira
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 if "manager_sql" not in st.session_state:
     st.session_state.manager_sql = SQL_Manager()
@@ -67,7 +68,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.01])
         col2.image(
-            os.path.join(base_path, "streamlit", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
             width=500,
         )
 

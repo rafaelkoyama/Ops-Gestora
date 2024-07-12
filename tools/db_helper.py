@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = "2.0.1"
+VERSION_APP = "2.0.2"
 VERSION_REFDATE = "2024-07-05"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)

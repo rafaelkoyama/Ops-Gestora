@@ -16,16 +16,16 @@ from datetime import date
 from io import BytesIO
 
 import pandas as pd
-from db_helper import SQL_Manager
-from streamlit_helper import (
+import streamlit as st
+
+from streamlitPanel.streamlit_helper import (
     dict_aux_btg_bases_cc_e_movs,
     extratoContaCorrenteFundos,
     movimentacaoPassivos,
     opcoes_fundos,
     passivosCotizar,
 )
-
-import streamlit as st
+from tools.db_helper import SQL_Manager
 
 st.set_page_config(
     page_title="Strix Capital - Painel de Controle",
@@ -100,7 +100,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.1])
         col2.image(
-            os.path.join(base_path, "streamlit", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
             width=500,
         )
 

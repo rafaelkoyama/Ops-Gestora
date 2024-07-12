@@ -10,7 +10,7 @@ sys.path.append(
 
 import ttkbootstrap as ttk
 
-from my_logger_desenvolvimento import Logger
+from tools.my_logger import Logger
 
 root = ttk.Window(themename="darkly")
 root.title("Capturar Tamanho da Janela")

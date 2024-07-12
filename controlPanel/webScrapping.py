@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = '1.1.0'
+VERSION_APP = '1.1.1'
 VERSION_REFDATE = "2024-07-10"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -19,14 +19,15 @@ from datetime import date, datetime
 import numpy as np
 import pandas as pd
 import requests
-from db_helper import SQL_Manager
-from my_logger import Logger
-from py_tools import FuncoesPyTools
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
+
+from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
+from tools.py_tools import FuncoesPyTools
 
 #-----------------------------------------------------------------------
 

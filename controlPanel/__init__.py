@@ -15,7 +15,7 @@ load_dotenv(os.path.join(base_path, ".env"))
 
 def append_paths():
 
-    list_folders = ["btg - faas", "controlPanel", "risco", "tools"]
+    list_folders = ["btg_faas", "controlPanel", "risco", "tools"]
 
     for folder in list_folders:
         if os.path.exists(os.path.join(base_path, folder)):

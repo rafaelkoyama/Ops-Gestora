@@ -1,23 +1,31 @@
-import os
+from __init__ import *
 
-str_user = os.getlogin()
+VERSION_APP = "2.0.1"
+VERSION_REFDATE = "2024-07-12"
+ENVIRONMENT = os.getenv("ENVIRONMENT")
+SCRIPT_NAME = os.path.basename(__file__)
 
-import sys
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
-sys.path.append(
-    f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos Python\\Modules"
-)
+append_paths()
 
+# -----------------------------------------------------------------------
+
+# Import bibliotecas:
 
 from datetime import date
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from db_helper import SQL_Manager
 from matplotlib.ticker import FuncFormatter
-from py_tools import FuncoesPyTools
 from scipy.stats import norm
+
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
+
+# -----------------------------------------------------------------------
 
 
 class enquadramentoCarteira:
@@ -444,15 +452,15 @@ class enquadramentoCarteira:
 
 class dadosRiscoFundos:
 
-    def __init__(self, strFundo, manager_sql=None):
+    def __init__(self, strFundo: str = None, manager_sql=None):
 
         if manager_sql is None:
-            self.manager = SQL_Manager()
+            self.manager_sql = SQL_Manager()
         else:
-            self.manager = manager_sql
+            self.manager_sql = manager_sql
 
         self.fundo = strFundo
-        self.df_suporte_dados = self.suporte_dados()
+
         self.dict_suporte = {
             "IMABAJUST": "IPCA + Yield IMA-B",
             "CDI": "CDI",
@@ -460,19 +468,26 @@ class dadosRiscoFundos:
             "STRIX FIA": "IMABAJUST",
         }
 
+    def set_refdate(self, refdate: date):
+
+        self.refdate = refdate
+
+    def set_suporte_dados(self):
+
+        self.df_suporte_dados = self.manager_sql.select_dataframe(
+            f"SELECT REFDATE, COTA_LIQUIDA, VAR_COTA_DIA/100 AS VAR_COTA_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA "
+            f"WHERE FUNDO = '{self.fundo}' AND REFDATE <= '{self.refdate}' "
+            f"ORDER BY REFDATE"
+        )
+
     def to_percent(self, y, position):
         s = f"{100 * y:.1f}%"
         return s
 
-    def suporte_dados(self):
-        self.df_suporte_dados = self.manager.select_dataframe(
-            f"SELECT REFDATE, COTA_LIQUIDA, VAR_COTA_DIA/100 AS VAR_COTA_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}' order by refdate"
-        )
-        return self.df_suporte_dados
-
     def df_drawdown_fundo(self):
 
-        df_dados = self.df_suporte_dados[["REFDATE", "COTA_LIQUIDA"]]
+        df_dados = self.df_suporte_dados[["REFDATE", "COTA_LIQUIDA"]].copy()
+
         from collections import defaultdict
 
         lista_cotas = df_dados.values.tolist()
@@ -496,6 +511,7 @@ class dadosRiscoFundos:
     def grafico_drawdown_fundo(self, tamanho_fig=(12, 6)):
 
         df_dados = self.df_drawdown_fundo()
+
         lista_dados = df_dados.values.tolist()
 
         datas = [row[0].strftime("%Y-%m-%d") for row in lista_dados]
@@ -528,7 +544,7 @@ class dadosRiscoFundos:
 
     def grafico_dispersao_x_normal(self, tamanho_fig=(12, 6)):
 
-        df_dados = self.df_suporte_dados
+        df_dados = self.df_suporte_dados.copy()
 
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
@@ -578,7 +594,7 @@ class dadosRiscoFundos:
 
     def df_volatilidade_anualizada(self, window=21):
 
-        df = self.df_suporte_dados
+        df = self.df_suporte_dados.copy()
 
         if df["VAR_COTA_DIA"].iloc[0] == 0:
             df = df.drop(index=0).reset_index(drop=True)
@@ -648,9 +664,8 @@ class dadosRiscoFundos:
 
     def rentabilidade_acumulada_fundo(self):
 
-        df_fundo = self.manager.select_dataframe(
-            f"SELECT DISTINCT REFDATE, COTA_LIQUIDA FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}' ORDER BY REFDATE"
-        )
+        df_fundo = self.df_suporte_dados[["REFDATE", "COTA_LIQUIDA"]].copy()
+
         df_fundo["REFDATE"] = pd.to_datetime(df_fundo["REFDATE"])
         df_fundo["RENTABILIDADE_ACUMULADA"] = (
             df_fundo["COTA_LIQUIDA"] / df_fundo["COTA_LIQUIDA"].iloc[0] - 1
@@ -660,8 +675,12 @@ class dadosRiscoFundos:
 
     def rentabilidade_acumulada_benchmark(self):
 
-        df_benchmark = self.manager.select_dataframe(
-            f"SELECT DISTINCT REFDATE, COTA_INDEXADOR FROM TB_INDEXADORES WHERE REFDATE >= (SELECT MIN(REFDATE) FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}') AND INDEXADOR = '{self.dict_suporte[self.fundo]}' ORDER BY REFDATE"
+        df_benchmark = self.manager_sql.select_dataframe(
+            f"SELECT DISTINCT REFDATE, COTA_INDEXADOR FROM TB_INDEXADORES "
+            f"WHERE REFDATE >= (SELECT MIN(REFDATE) FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}') "
+            f"AND REFDATE <= '{self.refdate}' "
+            f"AND INDEXADOR = '{self.dict_suporte[self.fundo]}' "
+            f"ORDER BY REFDATE"
         )
         df_benchmark["REFDATE"] = pd.to_datetime(df_benchmark["REFDATE"])
         df_benchmark["RENTABILIDADE_ACUMULADA"] = (
@@ -744,7 +763,9 @@ class dadosRiscoFundos:
         return plt
 
     def var_parametrico(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         results = df_dados["VAR_COTA_DIA"].values.tolist()
@@ -760,7 +781,7 @@ class dadosRiscoFundos:
 
     def var_historico(self):
 
-        df_dados = self.df_suporte_dados
+        df_dados = self.df_suporte_dados.copy()
 
         df_var_hist = df_dados
         if df_var_hist["VAR_COTA_DIA"].iloc[0] == 0:
@@ -782,21 +803,27 @@ class dadosRiscoFundos:
             return var * 100
 
     def diasPositivos(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         dias_positivos = df_dados.query("VAR_COTA_DIA > 0").shape[0]
         return dias_positivos
 
     def diasNegativos(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         dias_negativos = df_dados.query("VAR_COTA_DIA < 0").shape[0]
         return dias_negativos
 
     def maioresRentabilidades(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         df_maiores_rents = (
@@ -817,7 +844,9 @@ class dadosRiscoFundos:
         return df_maiores_rents
 
     def menoresRentabilidades(self):
-        df_dados = self.df_suporte_dados
+
+        df_dados = self.df_suporte_dados.copy()
+
         if df_dados["VAR_COTA_DIA"].iloc[0] == 0:
             df_dados = df_dados.drop(index=0).reset_index(drop=True)
         df_menores_rents = (
@@ -836,3 +865,155 @@ class dadosRiscoFundos:
             }
         )
         return df_menores_rents
+
+
+class liquidezAtivos:
+
+    def __init__(self, manager_sql=None, funcoes_pytools=None):
+
+        if manager_sql is None:
+            self.manager_sql = SQL_Manager()
+        else:
+            self.manager_sql = manager_sql
+
+        if funcoes_pytools is None:
+            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
+        else:
+            self.funcoes_pytools = funcoes_pytools
+
+    def set_refdate(self, refdate: date):
+
+        self.refdate = refdate
+        self.dmenos21 = self.funcoes_pytools.workday_br(self.refdate, -21)
+
+    def captura_base_negocios_b3(self, lista_ativos: list):
+        """
+        Retorna DataFrame contendo dados de negociação de ativos que estão na tabela TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA
+
+        Args:
+            lista_ativos (list): Lista de ativos para captura dos dados.
+
+        """
+
+        str_ativos = "', '".join(lista_ativos)
+
+        df = self.manager_sql.select_dataframe(
+            f"SELECT * FROM TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA WHERE REFDATE >= '{self.dmenos21}' AND REFDATE < '{self.refdate}' "
+            f"AND COD_IF IN ('{str_ativos}') AND STATUS = 'Confirmado'"
+        )
+
+        return df
+
+    def mercado_observavel(self, lista_tipo_ativos: list):
+        """
+        Cria DataFrame 'df_liquidez_mercado_observavel' contendo dados de liquidez dos ativos em carteira que compõem o mercado observável de liquidez.
+
+        Args:
+            lista_tipo_ativos (list): Lista de TIPO_ATIVO que compõem mercado observável.
+
+        """
+
+        def captura_base_carteira(lista_tipo_ativos):
+
+            str_lista_tipo_ativos = "', '".join(lista_tipo_ativos)
+
+            df = self.manager_sql.select_dataframe(
+                f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO] FROM TB_CARTEIRAS "
+                f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ('{str_lista_tipo_ativos}') AND QUANTIDADE_D0 > 0 "
+                f"GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
+            )
+
+            lista_ativos = df["ATIVO"].unique().tolist()
+
+            return df, lista_ativos
+
+        # bases a serem trabalhdas:
+        df_carteira, lista_ativos = captura_base_carteira(lista_tipo_ativos)
+        df_base_b3 = self.captura_base_negocios_b3(lista_ativos)
+
+        # trabalha premissa de venda
+        dias = df_base_b3["REFDATE"].nunique()
+        df_base_b3 = df_base_b3.groupby(["COD_IF"])["FINANCEIRO"].sum().reset_index()
+        df_base_b3["PREMISSA_VENDA"] = (df_base_b3["FINANCEIRO"] / dias * 0.3).round(2)
+        df_base_b3 = df_base_b3[["COD_IF", "PREMISSA_VENDA"]].rename(
+            columns={"COD_IF": "ATIVO"}
+        )
+
+        # df carteira com liquidez e percentual de liquidez da carteira
+        df_liquidez = pd.merge(df_carteira, df_base_b3, on="ATIVO", how="left")
+        df_liquidez["LIQUIDEZ_ATIVO_CARTEIRA"] = (
+            df_liquidez["PREMISSA_VENDA"] / df_liquidez["FINANCEIRO"]
+        )
+        df_liquidez["PREMISSA_VENDA"] = df_liquidez["PREMISSA_VENDA"].apply(
+            lambda x: 0 if pd.isnull(x) else x
+        )
+        df_liquidez["LIQUIDEZ_ATIVO_CARTEIRA"] = df_liquidez[
+            "LIQUIDEZ_ATIVO_CARTEIRA"
+        ].apply(lambda x: 0 if pd.isnull(x) else x)
+        df_liquidez["LIQUIDEZ_ATIVO_CARTEIRA"] = df_liquidez[
+            "LIQUIDEZ_ATIVO_CARTEIRA"
+        ].apply(lambda x: 1 if x > 1 else x)
+
+        df_liquidez.insert(3, "TIPO_LIQUIDEZ", "Mercado observável")
+
+        self.df_liquidez_mercado_observavel = df_liquidez.copy()
+
+    def titulos_publicos(self, lista_tipo_ativos: list):
+        """
+        Cria DataFrame 'df_liquidez_titulos_publicos' contendo dados de liquidez dos ativos em carteira que compõem o mercado de títulos públicos.
+
+        Args:
+            lista_tipo_ativos (list): Lista de TIPO_ATIVO que compõem títulos públicos.
+
+        """
+
+        str_lista_tipo_ativos = "', '".join(lista_tipo_ativos)
+
+        df = self.manager_sql.select_dataframe(
+            f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO] FROM TB_CARTEIRAS "
+            f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ('{str_lista_tipo_ativos}') AND QUANTIDADE_D0 > 0 "
+            f"GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
+        )
+
+        df["PREMISSA_VENDA"] = df["FINANCEIRO"]
+        df["LIQUIDEZ_ATIVO_CARTEIRA"] = 1
+        df.insert(3, "TIPO_LIQUIDEZ", "Títulos Públicos")
+
+        self.df_liquidez_titulos_publicos = df.copy()
+
+    def run_all(self, refdate: date, dict_tipo_ativos: dict = None):
+        """
+        Cria DataFrame 'df_liquidez_all' contendo dados de liquidez dos ativos em carteira.
+
+        Args:
+            dict_tipo_ativos (dict): Dicionário contendo lista de TIPO_ATIVO que compõem mercado observável, títulos públicos.
+
+        """
+
+        def set_dict_listas_tipo_ativos():
+
+            dict_lista_tipo_ativos = {
+                "mercado_observavel": ["Debênture"],
+                "titulos_publicos": ["Tit. Publicos", "Compromissada"],
+            }
+
+            return dict_lista_tipo_ativos
+
+        self.set_refdate(refdate)
+
+        dict_aux_tipo_ativos = (
+            dict_tipo_ativos
+            if dict_tipo_ativos is not None
+            else set_dict_listas_tipo_ativos()
+        )
+
+        self.mercado_observavel(
+            lista_tipo_ativos=dict_aux_tipo_ativos["mercado_observavel"]
+        )
+        self.titulos_publicos(
+            lista_tipo_ativos=dict_aux_tipo_ativos["titulos_publicos"]
+        )
+
+        self.df_liquidez_all = pd.concat(
+            [self.df_liquidez_mercado_observavel, self.df_liquidez_mercado_observavel]
+        )

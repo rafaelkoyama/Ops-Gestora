@@ -16,7 +16,7 @@ load_dotenv(os.path.join(base_path, ".env"))
 def append_paths():
 
     list_folders = [
-        "btg - faas",
+        "btg_faas",
         "controlPanel",
         "risco",
         "tools",
@@ -28,7 +28,6 @@ def append_paths():
     for folder in list_folders:
         if os.path.exists(os.path.join(base_path, folder)):
             sys.path.append(os.path.join(base_path, folder))
-            print(os.path.join(base_path, folder))
 
 
 str_user = os.getlogin()

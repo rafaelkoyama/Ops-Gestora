@@ -1,47 +1,28 @@
-VERSAO_APP = '1.0.0'
-VERSAO_REFDATE = '2024-07-01'
-VERSAO_DENSENVOLVIMENTO = True
+from __init__ import *
 
-if VERSAO_DENSENVOLVIMENTO:
-    print(f"Boletador - Versão de Desenvolvimento")
+VERSION_APP = "1.0.1"
+VERSION_REFDATE = "2024-07-01"
+ENVIRONMENT = os.getenv("ENVIRONMENT")
+SCRIPT_NAME = os.path.basename(__file__)
+CONNECT_MANAGER_BTG = True
 
-def add_sys_path(path):
-    if os.path.exists(path):
-        sys.path.append(path)
-    else:
-        print(f"Path not found: {path}")
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
-import os
+append_paths()
 
-str_user = os.getlogin()
-
-import sys
-
-base_path = f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos Python\\Modules"
-paths_to_add = [
-    base_path,
-    os.path.join(base_path, "btg - faas"),
-    os.path.join(base_path, "painel backoffice"),
-    os.path.join(base_path, "Risco"),
-    os.path.join(base_path, "painel backoffice", "Desenvolvimento"),
-    os.path.join(base_path, "btg - faas", "desenvolvimento")
-    ]
-
-for path in paths_to_add:
-    add_sys_path(path)
+#-----------------------------------------------------------------------
 
 from datetime import date, datetime
 from tkinter import StringVar
 
 import numpy as np
-
-# Import bibliotecas originais
 import pandas as pd
 from ttkbootstrap import Separator, Toplevel, Window
 from ttkbootstrap.constants import *
 from ttkbootstrap.tableview import Tableview
 
-from biblioteca_widgets import (
+from controlPanel.biblioteca_widgets import (
     Messagebox,
     newBooleanVar,
     newButton,
@@ -59,10 +40,8 @@ from biblioteca_widgets import (
     newScrolledText,
     newStringVar,
 )
-
-# Import bilbiotecas proprias
-from db_helper import SQL_Manager
-from py_tools import FuncoesPyTools
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 
 class BoletadorAPP(Window if __name__ == "__main__" else Toplevel):

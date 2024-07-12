@@ -15,8 +15,9 @@ append_paths()
 from datetime import date
 
 import pandas as pd
+
 import streamlit as st
-from db_helper import SQL_Manager
+from tools.db_helper import SQL_Manager
 
 st.set_page_config(
     page_title="Strix Capital - Painel de Controle",
