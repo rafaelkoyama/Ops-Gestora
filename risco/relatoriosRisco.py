@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = "2.0.0"
+VERSION_APP = "2.0.1"
 VERSION_REFDATE = "2024-07-12"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -19,10 +19,11 @@ from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from db_helper import SQL_Manager
 from matplotlib.ticker import FuncFormatter
-from py_tools import FuncoesPyTools
 from scipy.stats import norm
+
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 # -----------------------------------------------------------------------
 

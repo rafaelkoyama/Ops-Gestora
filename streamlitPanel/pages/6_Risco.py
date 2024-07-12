@@ -16,6 +16,7 @@ append_paths()
 from datetime import date
 
 import streamlit as st
+
 from risco.relatoriosRisco import dadosRiscoFundos
 from tools.db_helper import SQL_Manager
 from tools.py_tools import FuncoesPyTools
@@ -64,7 +65,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.1])
         col2.image(
-            os.path.join(base_path, "streamlit", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
             width=500,
         )
 
@@ -103,6 +104,7 @@ if st.session_state["risco_fundos"] == True:
         with st.container(border=True):
 
             st.header("Strix FIA", divider="grey")
+            st.write(f"Refdate: {refdate}")
 
             with st.container(border=True):
 
@@ -179,6 +181,7 @@ if st.session_state["risco_fundos"] == True:
         with st.container(border=True):
 
             st.header("Strix Yield Master", divider="grey")
+            st.write(f"Refdate: {refdate}")
 
             with st.container(border=True):
                 tb_col1, tb_col2 = st.columns([1, 1])

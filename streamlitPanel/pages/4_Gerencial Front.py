@@ -18,9 +18,10 @@ from time import sleep
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from db_helper import SQL_Manager
-from py_tools import FuncoesPyTools
-from streamlit_helper import gerencialFront
+
+from streamlitPanel.streamlit_helper import gerencialFront
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 st.set_page_config(
     page_title="Strix Capital - Painel de Controle",
@@ -65,7 +66,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.01])
         col2.image(
-            os.path.join(base_path, "streamlit", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
             width=500,
         )
 

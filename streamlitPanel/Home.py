@@ -15,10 +15,11 @@ append_paths()
 # from socket import gethostbyname, gethostname
 
 import streamlit as st
-from db_helper import SQL_Manager
-from py_tools import FuncoesPyTools
-from relatoriosRisco import dadosRiscoFundos, enquadramentoCarteira
-from streamlit_helper import gerencialFront
+
+from risco.relatoriosRisco import dadosRiscoFundos, enquadramentoCarteira
+from streamlitPanel.streamlit_helper import gerencialFront
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 
 def check_if_need_load_modules(list_modules):
@@ -47,7 +48,7 @@ st.set_page_config(
 
 col1, col2, col3 = st.columns(3)
 col2.image(
-    os.path.join(base_path, "streamlit", "static", "logotipo_strix.png"),  # type: ignore
+    os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
     use_column_width=True,
 )
 

@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = "2.3.0"
+VERSION_APP = "2.3.1"
 VERSION_REFDATE = "2024-07-10"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -18,8 +18,13 @@ from datetime import date, datetime, timedelta
 from time import sleep
 
 import pandas as pd
-from biblioteca_processos import UpdateIndexadores, UploadArquivosXML
-from biblioteca_widgets import (
+from ttkbootstrap import Toplevel, Window
+from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
+from ttkbootstrap.tableview import Tableview
+
+from btg_faas.new_btg_api_reports import BTGReports
+from controlPanel.biblioteca_processos import UpdateIndexadores, UploadArquivosXML
+from controlPanel.biblioteca_widgets import (
     newBooleanVar,
     newButton,
     newCheckButton,
@@ -37,18 +42,17 @@ from biblioteca_widgets import (
     newStringVar,
     newWindowStatus,
 )
-from calculadoraRisco import calculadoraAtivos
-
-# Import bibliotecas prorias:
-from db_helper import SQL_Manager
-from my_logger import Logger
-from new_btg_api_reports import BTGReports
-from py_tools import FuncoesPyTools, OutlookHandler
-from sistemaCadastro import TelaCadastro
-from ttkbootstrap import Toplevel, Window
-from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
-from ttkbootstrap.tableview import Tableview
-from webScrapping import curvasB3, dadosB3, debenturesAnbima, openEdgeDriver
+from controlPanel.sistemaCadastro import TelaCadastro
+from controlPanel.webScrapping import (
+    curvasB3,
+    dadosB3,
+    debenturesAnbima,
+    openEdgeDriver,
+)
+from risco.calculadoraRisco import calculadoraAtivos
+from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
+from tools.py_tools import FuncoesPyTools, OutlookHandler
 
 #---------------------------------------------------------------
 

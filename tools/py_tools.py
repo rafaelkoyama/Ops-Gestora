@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = "1.1.3"
+VERSION_APP = "1.1.4"
 VERSION_REFDATE = "2024-07-08"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -15,8 +15,9 @@ from math import trunc
 
 import win32com.client as win32
 from dateutil.relativedelta import relativedelta
-from db_helper import SQL_Manager
-from my_logger import Logger
+
+from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
 
 # -----------------------------------------------------------------------
 

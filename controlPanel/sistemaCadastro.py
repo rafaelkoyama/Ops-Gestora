@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = "2.1.1"
+VERSION_APP = "2.1.2"
 VERSION_REFDATE = "2024-07-10"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -17,7 +17,10 @@ from datetime import datetime
 from tkinter import StringVar
 
 import pandas as pd
-from biblioteca_widgets import (
+from ttkbootstrap import Toplevel, Window
+from ttkbootstrap.constants import *
+
+from controlPanel.biblioteca_widgets import (
     Messagebox,
     newButton,
     newCombobox,
@@ -32,11 +35,9 @@ from biblioteca_widgets import (
     newScrolledText,
     newStringVar,
 )
-from db_helper import SQL_Manager
-from my_logger import Logger
-from py_tools import FuncoesPyTools
-from ttkbootstrap import Toplevel, Window
-from ttkbootstrap.constants import *
+from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
+from tools.py_tools import FuncoesPyTools
 
 #-----------------------------------------------------------------------
 

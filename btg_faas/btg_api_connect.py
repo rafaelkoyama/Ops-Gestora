@@ -1,6 +1,6 @@
 from __init__ import *
 
-VERSION_APP = "2.2.1"
+VERSION_APP = "2.2.2"
 VERSION_REFDATE = "2024-07-10"
 ENVIRONMENT = os.getenv("ENVIRONMENT")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -17,8 +17,9 @@ import re
 from time import sleep, time
 
 import requests
-from db_helper import SQL_Manager
-from my_logger import Logger
+
+from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
 
 # -----------------------------------------------------------------------
 

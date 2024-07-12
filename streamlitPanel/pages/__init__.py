@@ -5,7 +5,7 @@ import sys
 
 from dotenv import load_dotenv
 
-base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(base_path)
 
 load_dotenv(os.path.join(base_path, ".env"))
@@ -16,10 +16,11 @@ load_dotenv(os.path.join(base_path, ".env"))
 def append_paths():
 
     list_folders = [
-        "btg - faas",
+        "btg_faas",
         "controlPanel",
         "risco",
         "tools",
+        "streamlit",
         "streamlit\\static",
         "streamlit\\pages",
     ]

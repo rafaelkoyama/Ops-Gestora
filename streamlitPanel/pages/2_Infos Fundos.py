@@ -16,8 +16,9 @@ from io import BytesIO
 
 import pandas as pd
 import streamlit as st
-from db_helper import SQL_Manager
-from py_tools import FuncoesPyTools
+
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 st.set_page_config(
     page_title="Strix Capital - Painel de Controle",
@@ -54,7 +55,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.1])
         col2.image(
-            os.path.join(base_path, "streamlit", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
             width=500,
         )
 
