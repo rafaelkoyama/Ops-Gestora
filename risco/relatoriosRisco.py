@@ -881,51 +881,52 @@ class liquidezAtivos:
         else:
             self.funcoes_pytools = funcoes_pytools
 
+        self.lista_tipo_ativos_observaveis = ["Debênture"]
+        self.lista_tipo_ativos_titulos_publicos = ["Tit. Publicos", "Compromissada"]
+        self.lista_tipo_ativos_fluxo = ["CCB", "CDB", "LF", "LFSC", "LFSN-PRE"]
+
     def set_refdate(self, refdate: date):
 
         self.refdate = refdate
+
         self.dmenos21 = self.funcoes_pytools.workday_br(self.refdate, -21)
 
-    def captura_base_negocios_b3(self, lista_ativos: list):
-        """
-        Retorna DataFrame contendo dados de negociação de ativos que estão na tabela TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA
+        self.captura_lista_ativos_observaveis()
+        self.captura_base_negocios_b3()
+        self.captura_lista_ativos_observaveis_sem_liquidez()
 
-        Args:
-            lista_ativos (list): Lista de ativos para captura dos dados.
+    def captura_lista_ativos_observaveis(self):
 
-        """
+        self.lista_ativos_observaveis = self.manager_sql.select_dataframe(
+            f"SELECT DISTINCT ATIVO FROM TB_CARTEIRAS WHERE REFDATE = '{self.refdate}' "
+            f"AND FINANCEIRO_D0 > 0 AND TIPO_ATIVO IN ({self.funcoes_pytools.convert_list_to_str(self.lista_tipo_ativos_observaveis)})"
+        )["ATIVO"].tolist()
 
-        str_ativos = "', '".join(lista_ativos)
+    def captura_base_negocios_b3(self):
 
-        df = self.manager_sql.select_dataframe(
+        self.df_base_b3 = self.manager_sql.select_dataframe(
             f"SELECT * FROM TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA WHERE REFDATE >= '{self.dmenos21}' AND REFDATE < '{self.refdate}' "
-            f"AND COD_IF IN ('{str_ativos}') AND STATUS = 'Confirmado'"
+            f"AND COD_IF IN ({self.funcoes_pytools.convert_list_to_str(self.lista_ativos_observaveis)}) AND STATUS = 'Confirmado'"
         )
 
-        return df
+    def captura_lista_ativos_observaveis_sem_liquidez(self):
 
-    def mercado_observavel(self, lista_tipo_ativos: list):
-        """
-        Cria DataFrame 'df_liquidez_mercado_observavel' contendo dados de liquidez dos ativos em carteira que compõem o mercado observável de liquidez.
+        set_b3 = set(self.df_base_b3["COD_IF"].unique())
+        set_carteira = set(self.lista_ativos_observaveis)
 
-        Args:
-            lista_tipo_ativos (list): Lista de TIPO_ATIVO que compõem mercado observável.
+        self.lista_ativos_observaveis_sem_liquidez = list(set_carteira - set_b3)
 
-        """
+    def liquidez_mercado_observavel(self):
 
-        def captura_base_carteira(lista_tipo_ativos):
-
-            str_lista_tipo_ativos = "', '".join(lista_tipo_ativos)
+        def captura_base_carteira():
 
             df = self.manager_sql.select_dataframe(
                 f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO] FROM TB_CARTEIRAS "
-                f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ('{str_lista_tipo_ativos}') AND QUANTIDADE_D0 > 0 "
+                f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ({self.funcoes_pytools.convert_list_to_str(self.lista_tipo_ativos_observaveis)}) AND FINANCEIRO_D0 > 0 "
                 f"GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
             )
 
-            lista_ativos = df["ATIVO"].unique().tolist()
-
-            return df, lista_ativos
+            return df
 
         def calcular_liquidez_total_gerada(grupo):
             grupo = grupo.sort_values("REFDATE").reset_index(drop=True)
@@ -943,8 +944,10 @@ class liquidezAtivos:
             return grupo
 
         # bases a serem trabalhdas:
-        df_carteira, lista_ativos = captura_base_carteira(lista_tipo_ativos)
-        df_base_b3 = self.captura_base_negocios_b3(lista_ativos)
+        df_carteira = captura_base_carteira()
+
+        self.captura_base_negocios_b3()
+        df_base_b3 = self.df_base_b3.copy()
 
         # trabalha premissa de venda
         dias = df_base_b3["REFDATE"].nunique()
@@ -956,12 +959,6 @@ class liquidezAtivos:
 
         df_carteira.insert(2, "Categoria", "Mercado observável")
         df_liquidez = pd.merge(df_carteira, df_base_b3, on="ATIVO", how="left")
-
-        self.lista_ativos_sem_liquidez = (
-            df_liquidez[df_liquidez["PREMISSA_VENDA"].isnull()]["ATIVO"]
-            .unique()
-            .tolist()
-        )
 
         df_liquidez = df_liquidez.dropna(subset=["PREMISSA_VENDA"])
 
@@ -1091,20 +1088,15 @@ class liquidezAtivos:
 
         self.df_resumo_liquidez_diaria_observaveis = df_liquidez_diaria_resumo.copy()
 
-    def titulos_publicos(self, lista_tipo_ativos: list):
-        """
-        Cria DataFrame 'df_liquidez_titulos_publicos' contendo dados de liquidez dos ativos em carteira que compõem o mercado de títulos públicos.
+    def liquidez_titulos_publicos(self):
 
-        Args:
-            lista_tipo_ativos (list): Lista de TIPO_ATIVO que compõem títulos públicos.
-
-        """
-
-        str_lista_tipo_ativos = "', '".join(lista_tipo_ativos)
+        str_lista_tipo_ativos = self.funcoes_pytools.convert_list_to_str(
+            self.lista_tipo_ativos_titulos_publicos
+        )
 
         df = self.manager_sql.select_dataframe(
             f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO] FROM TB_CARTEIRAS "
-            f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ('{str_lista_tipo_ativos}') AND QUANTIDADE_D0 > 0 "
+            f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ({str_lista_tipo_ativos}) AND QUANTIDADE_D0 > 0 "
             f"GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
         )
 
@@ -1160,39 +1152,102 @@ class liquidezAtivos:
             .reset_index()
         )
 
-    def run_all(self, refdate: date, dict_tipo_ativos: dict = None):
-        """
-        Cria DataFrame 'df_liquidez_all' contendo dados de liquidez dos ativos em carteira.
+    def liquidez_fluxo(self):
 
-        Args:
-            dict_tipo_ativos (dict): Dicionário contendo lista de TIPO_ATIVO que compõem mercado observável, títulos públicos.
-
-        """
-
-        def set_dict_listas_tipo_ativos():
-
-            dict_lista_tipo_ativos = {
-                "mercado_observavel": ["Debênture"],
-                "titulos_publicos": ["Tit. Publicos", "Compromissada"],
-            }
-
-            return dict_lista_tipo_ativos
-
-        self.set_refdate(refdate)
-
-        dict_aux_tipo_ativos = (
-            dict_tipo_ativos
-            if dict_tipo_ativos is not None
-            else set_dict_listas_tipo_ativos()
+        str_sem_liquidez = self.funcoes_pytools.convert_list_to_str(
+            self.lista_ativos_observaveis_sem_liquidez
+        )
+        str_observaveis = self.funcoes_pytools.convert_list_to_str(
+            self.lista_tipo_ativos_observaveis
+        )
+        str_tipo_ativos_fluxo = self.funcoes_pytools.convert_list_to_str(
+            self.lista_tipo_ativos_fluxo
         )
 
-        self.mercado_observavel(
-            lista_tipo_ativos=dict_aux_tipo_ativos["mercado_observavel"]
+        df_ativos_fluxo = self.manager_sql.select_dataframe(
+            f"SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO NOT IN ({str_observaveis})"
         )
-        self.titulos_publicos(
-            lista_tipo_ativos=dict_aux_tipo_ativos["titulos_publicos"]
+        df_fluxo_observaveis_sem_liquidez = self.manager_sql.select_dataframe(
+            f"SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE REFDATE = '{self.refdate}' AND ATIVO IN ({str_sem_liquidez})"
         )
 
-        self.df_liquidez_all = pd.concat(
-            [self.df_liquidez_mercado_observavel, self.df_liquidez_mercado_observavel]
+        df_ativos_fluxo = pd.concat(
+            [df_ativos_fluxo, df_fluxo_observaveis_sem_liquidez]
         )
+
+        df_ativos_fluxo = df_ativos_fluxo[
+            ["ATIVO", "DATA_LIQUIDACAO", "FLUXO_DESCONTADO"]
+        ]
+
+        df_carteira = self.manager_sql.select_dataframe(
+            f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_CARTEIRAS WHERE "
+            f"REFDATE = '{self.refdate}' AND FINANCEIRO_D0 > 0 AND TIPO_ATIVO IN ({str_tipo_ativos_fluxo})"
+        )
+
+        df_carteira_observaveis_sem_liquidez = self.manager_sql.select_dataframe(
+            f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_CARTEIRAS WHERE "
+            f"REFDATE = '{self.refdate}' AND FINANCEIRO_D0 > 0 AND ATIVO IN ({str_sem_liquidez})"
+        )
+
+        df_carteira = pd.concat([df_carteira, df_carteira_observaveis_sem_liquidez])
+
+        if (
+            len(
+                (
+                    set(df_carteira["ATIVO"].unique())
+                    - set(df_ativos_fluxo["ATIVO"].unique())
+                )
+            )
+            == 0
+        ):
+            print("Todos os ativos da carteira possuem fluxo futuro")
+        else:
+            print("Há ativos na carteira sem fluxo futuro")
+
+        df_liquidez_fluxo = pd.merge(
+            df_carteira, df_ativos_fluxo, on="ATIVO", how="left"
+        )
+
+        df_liquidez_fluxo.loc[:, "Liquidez gerada dia"] = (
+            df_liquidez_fluxo["FLUXO_DESCONTADO"] * df_liquidez_fluxo["QUANTIDADE_D0"]
+        )
+
+        df_liquidez_fluxo.loc[:, "Categoria"] = "Fluxo"
+
+        df_liquidez_fluxo.rename(
+            columns={
+                "DATA_LIQUIDACAO": "Refdate",
+                "TIPO_ATIVO": "Tipo Ativo",
+                "FUNDO": "Fundo",
+                "ATIVO": "Ativo",
+            },
+            inplace=True,
+        )
+
+        df_liquidez_fluxo = (
+            df_liquidez_fluxo[
+                [
+                    "Refdate",
+                    "Fundo",
+                    "Categoria",
+                    "Tipo Ativo",
+                    "Ativo",
+                    "Liquidez gerada dia",
+                ]
+            ]
+            .sort_values(by=["Refdate", "Fundo"])
+            .reset_index(drop=True)
+        )
+
+        df_resumo_liquidez_fluxo = (
+            df_liquidez_fluxo[["Refdate", "Fundo", "Categoria", "Liquidez gerada dia"]]
+            .groupby(["Refdate", "Fundo", "Categoria"])
+            .sum()
+            .reset_index()
+        )
+
+        df_resumo_liquidez_fluxo["Liquidez total gerada"] = df_resumo_liquidez_fluxo[
+            "Liquidez gerada dia"
+        ].cumsum()
+
+        self.df_resumo_liquidez_fluxo = df_resumo_liquidez_fluxo.copy()
