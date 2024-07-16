@@ -647,21 +647,21 @@ class gerencialFront:
                 aux_df_emissor["aux_duration"].values[0],
             ]
 
-        df_debentures["Exposição (R$)"] = df_debentures["Exposição (R$)"].apply(
-            lambda x: f"{x:,.0f}"
-        )
+        # df_debentures["Exposição (R$)"] = df_debentures["Exposição (R$)"].apply(
+        #     lambda x: f"{x:,.0f}"
+        # )
         df_debentures["Duration"] = df_debentures["Duration"].apply(
             lambda x: int(x) if pd.notnull(x) else None
         )
-        for coluna in [
-            "% Alocação",
-            "Carrego Original",
-            "Carrego CDI +",
-            "Taxa de Emissão",
-        ]:
-            df_debentures[coluna] = df_debentures[coluna].apply(
-                lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
-            )
+        # for coluna in [
+        #     "% Alocação",
+        #     "Carrego Original",
+        #     "Carrego CDI +",
+        #     "Taxa de Emissão",
+        # ]:
+        #     df_debentures[coluna] = df_debentures[coluna].apply(
+        #         lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
+        #     )
 
         self.df_debentures = df_debentures
         self.emissores_debentures = emissores_debentures
@@ -738,21 +738,21 @@ class gerencialFront:
                 aux_df_emissor["aux_duration"].values[0],
             ]
 
-        df_letras_financeiras["Exposição (R$)"] = df_letras_financeiras[
-            "Exposição (R$)"
-        ].apply(lambda x: f"{x:,.0f}")
+        # df_letras_financeiras["Exposição (R$)"] = df_letras_financeiras[
+        #     "Exposição (R$)"
+        # ].apply(lambda x: f"{x:,.0f}")
         df_letras_financeiras["Duration"] = df_letras_financeiras["Duration"].apply(
             lambda x: int(x) if pd.notnull(x) else None
         )
-        for coluna in [
-            "% Alocação",
-            "Carrego Original",
-            "Carrego CDI +",
-            "Taxa de Emissão",
-        ]:
-            df_letras_financeiras[coluna] = df_letras_financeiras[coluna].apply(
-                lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
-            )
+        # for coluna in [
+        #     "% Alocação",
+        #     "Carrego Original",
+        #     "Carrego CDI +",
+        #     "Taxa de Emissão",
+        # ]:
+        #     df_letras_financeiras[coluna] = df_letras_financeiras[coluna].apply(
+        #         lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
+        #     )
 
         self.df_letras_financeiras = df_letras_financeiras
         self.emissores_lfs = emissores_lfs
@@ -823,21 +823,21 @@ class gerencialFront:
                 aux_df_emissor["aux_duration"].values[0],
             ]
 
-        df_fidcs["Exposição (R$)"] = df_fidcs["Exposição (R$)"].apply(
-            lambda x: f"{x:,.0f}"
-        )
+        # df_fidcs["Exposição (R$)"] = df_fidcs["Exposição (R$)"].apply(
+        #     lambda x: f"{x:,.0f}"
+        # )
         df_fidcs["Duration"] = df_fidcs["Duration"].apply(
             lambda x: int(x) if pd.notnull(x) else None
         )
-        for coluna in [
-            "% Alocação",
-            "Carrego Original",
-            "Carrego CDI +",
-            "Taxa de Emissão",
-        ]:
-            df_fidcs[coluna] = df_fidcs[coluna].apply(
-                lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
-            )
+        # for coluna in [
+        #     "% Alocação",
+        #     "Carrego Original",
+        #     "Carrego CDI +",
+        #     "Taxa de Emissão",
+        # ]:
+        #     df_fidcs[coluna] = df_fidcs[coluna].apply(
+        #         lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
+        #     )
 
         self.df_fidcs = df_fidcs
         self.emissores_fidcs = emissores_fidcs
