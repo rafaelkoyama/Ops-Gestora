@@ -548,16 +548,12 @@ if st.session_state["gerencial"] == True:
             "SELECT DISTINCT EMISSOR AS Emissor, GRUPO_ECONOMICO, TIPO_EMISSOR FROM TB_CADASTRO_EMISSOR"
         )
 
-        dict_classe_ativo = (
-            st.session_state.manager_sql.select_dataframe(
-                f"SELECT DISTINCT ATIVO as Ativo, CLASSE_ATIVO FROM TB_CADASTRO_ATIVOS WHERE CLASSE_ATIVO IS NOT NULL"
-            )
-            .set_index("Ativo")["CLASSE_ATIVO"]
-            .to_dict()
+        df_cadastro_ativo = st.session_state.manager_sql.select_dataframe(
+            "SELECT DISTINCT ATIVO as Ativo, CLASSE_ATIVO as [Classe Ativo], TIPO_ATIVO as [Tipo Ativo] FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('DIVIDENDOS', 'Caixa', 'Provisões & Despesas', 'Ajuste Cisão', 'Fundos Caixa', 'Ações BR')"
         )
 
         df_all = pd.merge(df_all, df_cadastro_emissor, on="Emissor", how="left")
-        df_all["Classe Ativo"] = df_all["Ativo"].map(dict_classe_ativo)
+        df_all = pd.merge(df_all, df_cadastro_ativo, on="Ativo", how="left")
 
         df_all.rename(
             columns={
@@ -572,6 +568,7 @@ if st.session_state["gerencial"] == True:
                 "Emissor",
                 "Tipo Emissor",
                 "Grupo Economico",
+                "Tipo Ativo",
                 "Ativo",
                 "Classe Ativo",
                 "Indexador",
@@ -584,6 +581,8 @@ if st.session_state["gerencial"] == True:
                 "Vencimento",
             ]
         ]
+
+        df_all.insert(0, "Refdate", refdate)
 
         st.sidebar.divider()
 

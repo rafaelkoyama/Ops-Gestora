@@ -13,8 +13,12 @@ if ENVIRONMENT == "DEVELOPMENT":
 from datetime import date, datetime, timedelta
 from math import trunc
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import win32com.client as win32
 from dateutil.relativedelta import relativedelta
+from matplotlib.ticker import FuncFormatter
 
 from tools.db_helper import SQL_Manager
 from tools.my_logger import Logger
@@ -261,8 +265,6 @@ class FuncoesPyTools:
     #     cursor.close()
     #     return result
 
-
-
 class ProcessManagerOutlook:
 
     def __init__(self, app):
@@ -483,3 +485,66 @@ class OutlookHandler:
             str_endswith=str_endswith,
             str_to_save_attchament=str_to_save_attchament,
         )
+
+class Graficos:
+
+    def to_percent(self, y, position):
+        _ = position
+        s = f"{100 * y:.1f}%"
+        return s
+
+    def graficoLinhas(self, df_dados:pd.DataFrame, titulo_grafico:str=None, label_dados:str=None, label_eixo_y:str=None, tamanho_fig=(12, 6), dados_percent=True):
+
+        df_dados = df_dados.values.tolist()
+        refdates, dados = zip(*df_dados)
+
+        refdates = [
+            data.strftime("%Y-%m-%d") if not isinstance(data, str) else data
+            for data in refdates
+        ]
+
+        plt.style.use("seaborn-v0_8-dark")
+
+        plt.figure(figsize=tamanho_fig)
+
+        plt.plot(
+            refdates, dados, label=label_dados if label_dados else "", color="DarkSlateGray", linewidth=1
+        )
+
+        plt.title(
+            titulo_grafico if titulo_grafico else "",
+            fontsize=16,
+            fontweight="bold",
+        )
+
+        if label_eixo_y:
+            plt.ylabel(label_eixo_y)
+
+        if dados_percent:
+            formatter = FuncFormatter(self.to_percent)
+            plt.gca().yaxis.set_major_formatter(formatter)
+
+        if len(refdates) < 20:
+            intervalo = int(len(refdates) / 5)
+        else:
+            intervalo = int(len(refdates) / 20)
+
+        plt.xticks(
+            ticks=np.arange(len(refdates))[::intervalo],
+            labels=[refdates[i] for i in np.arange(len(refdates))[::intervalo]],
+            rotation=90,
+        )
+
+        plt.grid(
+            True, which="major", linestyle="--", linewidth=0.5, color="grey", axis="y"
+        )
+
+        plt.tight_layout()
+
+        if label_dados:
+            plt.legend()
+
+        return plt
+
+
+
