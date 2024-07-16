@@ -91,22 +91,44 @@ if st.session_state.risco_liquidez_ativos:
 
     else:
 
-        lista_observaveis = ["Debênture"]
         lista_titulos_publicos = ["Tit. Publicos", "Compromissada"]
 
         st.session_state.manager_liquidez.set_refdate(refdate)
 
-        st.session_state.manager_liquidez.mercado_observavel(lista_observaveis)
+        # Call da base mercado observavel
+
+        st.session_state.manager_liquidez.liquidez_mercado_observavel()
 
         df_resumo_observaveis = (
             st.session_state.manager_liquidez.df_resumo_liquidez_diaria_observaveis.copy()
         )
 
-        dias_liquidez_total_observaveis = len(df_resumo_observaveis["Refdate"].unique())
+        dias_liquidez_total_observaveis = (
+            st.session_state.funcoes_pytools.networkdays_br(
+                data_inicio=df_resumo_observaveis["Refdate"].min(),
+                data_fim=df_resumo_observaveis["Refdate"].max(),
+            )
+        )
 
-        st.session_state.manager_liquidez.titulos_publicos(lista_titulos_publicos)
+        # Call da base titulos publicos
+
+        st.session_state.manager_liquidez.liquidez_titulos_publicos()
+
         df_resumo_titulos_publicos = (
             st.session_state.manager_liquidez.df_resumo_tit_publicos.copy()
+        )
+
+        # Call da base fluxo
+
+        st.session_state.manager_liquidez.liquidez_fluxo()
+
+        df_resumo_fluxo = (
+            st.session_state.manager_liquidez.df_resumo_liquidez_fluxo.copy()
+        )
+
+        dias_liquidez_total_fluxo = st.session_state.funcoes_pytools.networkdays_br(
+            data_inicio=df_resumo_fluxo["Refdate"].min(),
+            data_fim=df_resumo_fluxo["Refdate"].max(),
         )
 
         # -----------------------------------------------------------------------
@@ -115,12 +137,18 @@ if st.session_state.risco_liquidez_ativos:
         st.subheader("Resumo")
 
         st.write(f"Dias úteis zeragem títulos publicos: 1")
+
         st.write(
             f"Dias úteis zeragem mercado observável: {dias_liquidez_total_observaveis}"
         )
 
+        st.write(f"Dias úteis zeragem fluxo: {dias_liquidez_total_fluxo}")
+
         with st.expander("Tabela Resumo Título Público"):
             st.dataframe(df_resumo_titulos_publicos, hide_index=True)
+
+        with st.expander("Tabela Resumo Fluxo"):
+            st.dataframe(df_resumo_fluxo, hide_index=True, height=1000)
 
         with st.expander("Tabela Resumo Mercado Observável"):
             st.dataframe(df_resumo_observaveis, hide_index=True, height=1000)

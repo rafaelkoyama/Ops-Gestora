@@ -210,23 +210,6 @@ class FuncoesPyTools:
         else:
             return rent_indexador
 
-    def captura_dado_unico_sql(self, conn, strSQL):
-        cursor = conn.cursor()
-        cursor.execute(strSQL)
-        result = cursor.fetchone()
-        cursor.close()
-        if result is None:
-            return None
-        else:
-            return result[0]
-
-    def captura_dados_sql(self, conn, strSQL):
-        cursor = conn.cursor()
-        cursor.execute(strSQL)
-        result = cursor.fetchall()
-        cursor.close()
-        return result
-
     def checkFileExists(self, path):
         return os.path.exists(path)
 
@@ -235,6 +218,50 @@ class FuncoesPyTools:
             for i, line in enumerate(file):
                 if header_name in line:
                     return i
+
+    def convert_list_to_str(self, data_list):
+        """
+        Converte uma lista de elementos em uma string.
+        Strings são convertidas com aspas simples e separadas por vírgulas.
+        Números são separados por vírgulas sem aspas.
+
+        Args:
+            data_list (list): Lista de elementos a serem convertidos.
+
+        Returns:
+            str: String convertida.
+        """
+        str_elements = []
+        num_elements = []
+
+        for item in data_list:
+            if isinstance(item, str):
+                str_elements.append(f"'{item}'")
+            elif isinstance(item, (int, float)):
+                num_elements.append(str(item))
+
+        result = ', '.join(str_elements + num_elements)
+        return result
+
+
+    # def captura_dado_unico_sql(self, conn, strSQL):
+    #     cursor = conn.cursor()
+    #     cursor.execute(strSQL)
+    #     result = cursor.fetchone()
+    #     cursor.close()
+    #     if result is None:
+    #         return None
+    #     else:
+    #         return result[0]
+
+    # def captura_dados_sql(self, conn, strSQL):
+    #     cursor = conn.cursor()
+    #     cursor.execute(strSQL)
+    #     result = cursor.fetchall()
+    #     cursor.close()
+    #     return result
+
+
 
 class ProcessManagerOutlook:
 
