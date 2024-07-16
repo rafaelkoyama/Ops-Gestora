@@ -75,7 +75,7 @@ def LogoStrix():
 
 
 # refdate = st.sidebar.date_input("Refdate", value=date.today(), format="DD/MM/YYYY")
-refdate = date(2024, 6, 26)
+refdate = date(2024, 6, 25)
 
 
 # -----------------------------------------------------------------------
