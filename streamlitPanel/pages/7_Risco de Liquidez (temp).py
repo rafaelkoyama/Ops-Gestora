@@ -121,14 +121,26 @@ if st.session_state.risco_liquidez_ativos:
         # Call da base fluxo
 
         st.session_state.manager_liquidez.liquidez_fluxo()
+        st.session_state.manager_liquidez.liquidez_fluxo_fidc()
 
         df_resumo_fluxo = (
             st.session_state.manager_liquidez.df_resumo_liquidez_fluxo.copy()
         )
 
+        df_resumo_fluxo_fidcs = (
+            st.session_state.manager_liquidez.df_resumo_liquidez_fluxo_fidc.copy()
+        )
+
         dias_liquidez_total_fluxo = st.session_state.funcoes_pytools.networkdays_br(
             data_inicio=df_resumo_fluxo["Refdate"].min(),
             data_fim=df_resumo_fluxo["Refdate"].max(),
+        )
+
+        dias_liquidez_total_fluxo_fidcs = (
+            st.session_state.funcoes_pytools.networkdays_br(
+                data_inicio=df_resumo_fluxo_fidcs["Data Liquidação"].min(),
+                data_fim=df_resumo_fluxo_fidcs["Data Liquidação"].max(),
+            )
         )
 
         # -----------------------------------------------------------------------
@@ -144,11 +156,22 @@ if st.session_state.risco_liquidez_ativos:
 
         st.write(f"Dias úteis zeragem fluxo: {dias_liquidez_total_fluxo}")
 
+        st.write(f"Dias úteis zeragem fluxo FIDCs: {dias_liquidez_total_fluxo_fidcs}")
+
         with st.expander("Tabela Resumo Título Público"):
             st.dataframe(df_resumo_titulos_publicos, hide_index=True)
 
         with st.expander("Tabela Resumo Fluxo"):
-            st.dataframe(df_resumo_fluxo, hide_index=True, height=1000)
+            col1, col2, col3 = st.columns(3)
+            col1.dataframe(
+                df_resumo_fluxo, hide_index=True, height=1000, use_container_width=True
+            )
+            col2.dataframe(
+                df_resumo_fluxo_fidcs,
+                hide_index=True,
+                height=1000,
+                use_container_width=True,
+            )
 
         with st.expander("Tabela Resumo Mercado Observável"):
             st.dataframe(df_resumo_observaveis, hide_index=True, height=1000)

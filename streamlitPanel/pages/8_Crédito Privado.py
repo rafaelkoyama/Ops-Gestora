@@ -118,9 +118,6 @@ opt_selecao = st.sidebar.radio(
     on_change=desliga_states,
 )
 
-
-print(opt_selecao)
-
 if opt_selecao == "Selecionar Ativos":
 
     st.session_state.select_ativos = st.sidebar.multiselect(
