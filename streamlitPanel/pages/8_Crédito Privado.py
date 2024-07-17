@@ -127,6 +127,7 @@ if opt_selecao == "Selecionar Ativos":
         "Ativos",
         st.session_state.df_base_yields["ATIVO"].unique(),
         default=[],
+        on_change=desliga_states,
     )
 
 else:
@@ -151,47 +152,44 @@ if st.session_state.run_grafico_yields:
 
         df_base = st.session_state.df_base_yields.copy()
 
-        # ativos = df_base["ATIVO"].unique()
-
         i = 0
-        r = 0
 
         wait_ger = st.sidebar.empty()
 
         wait_ger.error("Aguarde, gerando gráficos...")
 
-        for ativo in st.session_state.select_ativos:
-            df_ativo = df_base[df_base["ATIVO"] == ativo][["REFDATE", "TAXA"]].copy()
+        for ativo in df_base["ATIVO"].unique():
 
-            if i == 0:
-                plt = st.session_state.graficos.graficoLinhas(
-                    df_dados=df_ativo,
-                    titulo_grafico=f"Yield - {ativo}",
-                    style="dark_background",
-                )
-                col1.pyplot(plt)
-                plt.close()
-                i += 1
+            if ativo in st.session_state.select_ativos:
 
-            elif i == 1:
-                plt = st.session_state.graficos.graficoLinhas(
-                    df_dados=df_ativo,
-                    titulo_grafico=f"Yield - {ativo}",
-                    style="Solarize_Light2",
-                )
-                col2.pyplot(plt)
-                plt.close()
-                i += 1
+                df_ativo = df_base[df_base["ATIVO"] == ativo][
+                    ["REFDATE", "TAXA"]
+                ].copy()
+                last_yield = df_ativo["TAXA"].iloc[-1] * 100
 
-            elif i == 2:
-                plt = st.session_state.graficos.graficoLinhas(
-                    df_dados=df_ativo,
-                    titulo_grafico=f"Yield - {ativo}",
-                    style="tableau-colorblind10",
-                )
-                col3.pyplot(plt)
-                plt.close()
-                i = 0
+                if i == 0:
+                    plt = st.session_state.graficos.graficoLinhas(
+                        df_dados=df_ativo, titulo_grafico=f"{ativo} - {last_yield:.2f}%"
+                    )
+                    col1.pyplot(plt)
+                    plt.close()
+                    i += 1
+
+                elif i == 1:
+                    plt = st.session_state.graficos.graficoLinhas(
+                        df_dados=df_ativo, titulo_grafico=f"{ativo} - {last_yield:.2f}%"
+                    )
+                    col2.pyplot(plt)
+                    plt.close()
+                    i += 1
+
+                elif i == 2:
+                    plt = st.session_state.graficos.graficoLinhas(
+                        df_dados=df_ativo, titulo_grafico=f"{ativo} - {last_yield:.2f}%"
+                    )
+                    col3.pyplot(plt)
+                    plt.close()
+                    i = 0
 
         wait_ger.success("Gráficos gerados com sucesso!")
         sleep(1)

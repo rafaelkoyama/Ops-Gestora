@@ -13,35 +13,40 @@ append_paths()
 
 #-----------------------------------------------------------------------
 
-from datetime import date, datetime
-from tkinter import StringVar
+try:
 
-import numpy as np
-import pandas as pd
-from ttkbootstrap import Separator, Toplevel, Window
-from ttkbootstrap.constants import *
-from ttkbootstrap.tableview import Tableview
+    from datetime import date, datetime
+    from tkinter import StringVar
 
-from controlPanel.biblioteca_widgets import (
-    Messagebox,
-    newBooleanVar,
-    newButton,
-    newCombobox,
-    newDateEntry,
-    newEntry,
-    newFrame,
-    newLabelFrame,
-    newLabelStatus,
-    newLabelSubtitle,
-    newLabelTitle,
-    newMenu,
-    newMenuButton,
-    newRadioButton,
-    newScrolledText,
-    newStringVar,
-)
-from tools.db_helper import SQL_Manager
-from tools.py_tools import FuncoesPyTools
+    import numpy as np
+    import pandas as pd
+    from ttkbootstrap import Separator, Toplevel, Window
+    from ttkbootstrap.constants import *
+    from ttkbootstrap.tableview import Tableview
+
+    from controlPanel.biblioteca_widgets import (
+        Messagebox,
+        newBooleanVar,
+        newButton,
+        newCombobox,
+        newDateEntry,
+        newEntry,
+        newFrame,
+        newLabelFrame,
+        newLabelStatus,
+        newLabelSubtitle,
+        newLabelTitle,
+        newMenu,
+        newMenuButton,
+        newRadioButton,
+        newScrolledText,
+        newStringVar,
+    )
+    from tools.db_helper import SQL_Manager
+    from tools.py_tools import FuncoesPyTools
+
+except Exception as e:
+    print(e)
 
 
 class BoletadorAPP(Window if __name__ == "__main__" else Toplevel):
@@ -103,7 +108,7 @@ class BoletadorAPP(Window if __name__ == "__main__" else Toplevel):
         frame_header.grid(row=1, column=0, sticky="ew", pady=(10, 0))
         frame_header.columnconfigure(0, weight=1)
 
-        newLabelTitle(frame_header, text=f"{"DESENVOLVIMENTO" if VERSAO_DENSENVOLVIMENTO else "Boletador Operações"}")\
+        newLabelTitle(frame_header, text=f"{"DESENVOLVIMENTO" if ENVIRONMENT == 'DEVELOPMENT' else "Boletador Operações"}")\
             .grid(row=0, column=0, sticky="ew")
 
         self.lbl_refdate = newLabelSubtitle(frame_header, text=f"Refdate Boletador: {self.refdate.strftime('%d/%m/%Y')}")
@@ -296,7 +301,7 @@ class ProcessManagerBTG:
         self.str_fundos = "', '".join(self.lista_fundos)
         self.str_tipo_ativos = "', '".join(self.lista_tipo_ativos)
 
-        if VERSAO_DENSENVOLVIMENTO:
+        if ENVIRONMENT == 'DEVELOPMENT':
             self.tb_boletas = "TB_BOLETAS_TESTE"
         else:
             self.tb_boletas = "TB_BOLETAS"
@@ -317,12 +322,6 @@ class ProcessManagerBTG:
         self.app.tabela_boletas_internas.load_table_data()
         self.app.tabela_boletas_internas.autoalign_columns()
         self.app.tabela_boletas_internas.autofit_columns()
-
-
-
-
-
-
 
 
 class BoletadorInterno:
@@ -583,7 +582,7 @@ class ProcessManagerInterno:
         else:
             self.funcoes_pytools = funcoes_pytools
 
-        if VERSAO_DENSENVOLVIMENTO:
+        if ENVIRONMENT == 'DEVELOPMENT':
             self.tb_boletas = "TB_BOLETAS_TESTE"
         else:
             self.tb_boletas = "TB_BOLETAS"
