@@ -14,9 +14,11 @@ append_paths()
 
 from datetime import date
 
+import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
+from tools.biblioteca_processos import DadosCarteirasAtivos
 from tools.db_helper import SQL_Manager
 from tools.py_tools import FuncoesPyTools
 
@@ -77,9 +79,13 @@ class gerencialFront:
             self.manager_sql = manager_sql
 
         if funcoes_pytools is None:
-            self.funcs_pytools = FuncoesPyTools(manager_sql=self.manager_sql)
+            self.funcoes_pytools = FuncoesPyTools(manager_sql=self.manager_sql)
         else:
-            self.funcs_pytools = funcoes_pytools
+            self.funcoes_pytools = funcoes_pytools
+
+        self.manager_dados = DadosCarteirasAtivos(
+            self.manager_sql, self.funcoes_pytools
+        )
 
         self.lista_classes_credito_privado = [
             "Debênture",
@@ -94,12 +100,13 @@ class gerencialFront:
 
     def set_refdate(self, refdate):
         self.refdate = refdate
+        self.manager_dados.set_refdate(refdate)
 
     def ipca_fidc_home_equity(self):
 
         refdate_menos_2m = self.refdate - relativedelta(months=2)
 
-        str_mes_menos_dois = self.funcs_pytools.date_str_mes_ano(refdate_menos_2m)
+        str_mes_menos_dois = self.funcoes_pytools.date_str_mes_ano(refdate_menos_2m)
 
         ipca_mes = self.manager_sql.select_dataframe(
             f"SELECT VALOR_MES FROM TB_IPCA_EFETIVO WHERE MES_ANO = '{str_mes_menos_dois}'"
@@ -869,38 +876,38 @@ class gerencialFront:
 
         self.df_carteira = self.manager_sql.select_dataframe(
             f"SELECT TIPO_ATIVO, ATIVO, FINANCEIRO_D0 FROM TB_CARTEIRAS "
-            f"WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}' "
+            f"WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' "
             f"AND FUNDO = 'Strix Yield Master' AND TIPO_ATIVO NOT IN ('Provisões & Despesas', 'Ajuste Cisão') AND FINANCEIRO_D0 <> 0"
         )
 
         self.df_anbima_debentures = self.manager_sql.select_dataframe(
             f"SELECT COD_ATIVO AS ATIVO, TAXA_INDICATIVA/100 AS TAXA_ANBIMA, ROUND(DURATION, 0) AS DURATION_ANBIMA "
-            f"FROM TB_ANBIMA_DEBENTURES WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}'"
+            f"FROM TB_ANBIMA_DEBENTURES WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}'"
         )
 
         self.df_taxas_btg = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT ATIVO, TAXA AS TAXA_BTG FROM TB_PRECOS "
-            f"WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}' AND FONTE = 'BTG' AND TAXA IS NOT NULL"
+            f"WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' AND FONTE = 'BTG' AND TAXA IS NOT NULL"
         )
 
         self.df_risco_duration = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT ATIVO, DURATION AS DURATION_RISCO FROM TB_RISCO_DURATION "
-            f"WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}'"
+            f"WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}'"
         )
 
         self.pl_fundo = self.manager_sql.select_dataframe(
             f"SELECT PATRIMONIO_LIQUIDO FROM TB_XML_CARTEIRAS_HEADER "
-            f"WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}' "
+            f"WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' "
             f"AND FUNDO = 'STRIX YIELD MASTER F'"
         )["PATRIMONIO_LIQUIDO"][0]
 
         self.cdi_ano = self.manager_sql.select_dataframe(
-            f"SELECT VALOR_ANO FROM TB_INDEXADORES WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}' "
+            f"SELECT VALOR_ANO FROM TB_INDEXADORES WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' "
             f"AND INDEXADOR = 'CDI'"
         )["VALOR_ANO"][0]
 
         self.selic_ano = self.manager_sql.select_dataframe(
-            f"SELECT VALOR_ANO FROM TB_INDEXADORES WHERE REFDATE = '{self.funcs_pytools.convert_data_sql(self.refdate)}' "
+            f"SELECT VALOR_ANO FROM TB_INDEXADORES WHERE REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' "
             f"AND INDEXADOR = 'SELIC'"
         )["VALOR_ANO"][0]
 
@@ -925,6 +932,45 @@ class gerencialFront:
         self.base_debentures()
         self.base_lfs()
         self.base_fidcs()
+
+    def get_df_fluxo_ativos(self):
+
+        df_fluxo = self.manager_dados.get_df_fluxo_futuro_ativos_by_refdate()
+        df_fluxo = df_fluxo[["ATIVO", "DATA_LIQUIDACAO", "FLUXO_DESCONTADO"]]
+        df_posicao_ativos = self.manager_dados.get_df_posicao_ativos_by_refdate()
+
+        df_fluxo_ativos = pd.merge(df_fluxo, df_posicao_ativos, on="ATIVO", how="left")
+
+        df_fluxo_ativos.loc[:, "Fluxo"] = (
+            df_fluxo_ativos["FLUXO_DESCONTADO"] * df_fluxo_ativos["QUANTIDADE_D0"]
+        )
+        df_fluxo_ativos = df_fluxo_ativos[
+            ["TIPO_ATIVO", "ATIVO", "DATA_LIQUIDACAO", "Fluxo"]
+        ].rename(
+            columns={
+                "DATA_LIQUIDACAO": "Data Liquidação",
+                "ATIVO": "Ativo",
+                "TIPO_ATIVO": "Tipo Ativo",
+            }
+        )
+        df_fluxo_ativos = (
+            df_fluxo_ativos.groupby(["Ativo", "Data Liquidação"])
+            .sum()
+            .sort_values(by="Data Liquidação")
+            .reset_index()
+        )
+
+        df_fluxo_T = (
+            df_fluxo_ativos.pivot_table(
+                index=["Tipo Ativo", "Ativo"], columns="Data Liquidação", values="Fluxo"
+            )
+            .sort_values(by=["Tipo Ativo", "Ativo"])
+            .reset_index()
+        )
+
+        df_fluxo_T.replace(np.nan, 0, inplace=True)
+
+        return df_fluxo_T
 
 
 class extratoContaCorrenteFundos:

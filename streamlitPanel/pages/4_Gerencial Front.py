@@ -43,6 +43,7 @@ if "manager_ger" not in st.session_state:
         funcoes_pytools=st.session_state.funcoes_pytools,
     )
 
+
 lista_states = ["fluxo_caixas", "gerencial"]
 
 for state in lista_states:
@@ -101,6 +102,57 @@ def check_last_refdate_gerencial_front(refdate):
     )
 
     return check_carteira, check_calculadora
+
+
+def get_excel_detalhe_ativos():
+
+    df_debentures = st.session_state.manager_ger.df_debentures
+    df_letras_financeiras = st.session_state.manager_ger.df_letras_financeiras
+    df_fidcs = st.session_state.manager_ger.df_fidcs
+
+    df_all = pd.concat([df_debentures, df_letras_financeiras, df_fidcs])
+
+    df_cadastro_emissor = st.session_state.manager_sql.select_dataframe(
+        "SELECT DISTINCT EMISSOR AS Emissor, GRUPO_ECONOMICO, TIPO_EMISSOR FROM TB_CADASTRO_EMISSOR"
+    )
+
+    df_cadastro_ativo = st.session_state.manager_sql.select_dataframe(
+        "SELECT DISTINCT ATIVO as Ativo, CLASSE_ATIVO as [Classe Ativo], TIPO_ATIVO as [Tipo Ativo] FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('DIVIDENDOS', 'Caixa', 'Provisões & Despesas', 'Ajuste Cisão', 'Fundos Caixa', 'Ações BR')"
+    )
+
+    df_all = pd.merge(df_all, df_cadastro_emissor, on="Emissor", how="left")
+    df_all = pd.merge(df_all, df_cadastro_ativo, on="Ativo", how="left")
+
+    df_all.rename(
+        columns={
+            "GRUPO_ECONOMICO": "Grupo Economico",
+            "TIPO_EMISSOR": "Tipo Emissor",
+        },
+        inplace=True,
+    )
+
+    df_all = df_all[
+        [
+            "Emissor",
+            "Tipo Emissor",
+            "Grupo Economico",
+            "Tipo Ativo",
+            "Ativo",
+            "Classe Ativo",
+            "Indexador",
+            "Exposição (R$)",
+            "% Alocação",
+            "Taxa de Emissão",
+            "Carrego Original",
+            "Carrego CDI +",
+            "Duration",
+            "Vencimento",
+        ]
+    ]
+
+    df_all.insert(0, "Refdate", refdate)
+
+    return df_all
 
 
 def fluxo_caixa():
@@ -295,202 +347,6 @@ def fluxo_caixa():
                 st.dataframe(df_fluxo_maior, use_container_width=True, hide_index=True)
 
 
-def gerencial_front():
-
-    status_ger, status_calc = check_last_refdate_gerencial_front(refdate)
-
-    if status_ger == False:
-        st.sidebar.error(f"Gerencial não disponivel.")
-    else:
-        aviso_pagina = st.sidebar.empty()
-        aviso_pagina.status("Processando...")
-        sleep(1)
-        aviso_pagina.empty()
-
-        with st.container(border=True):
-            col1, col2, col3 = st.columns([0.5, 10, 0.5])
-
-            with col2.container():
-                st.header(
-                    f"Gerencial Front - {refdate.strftime('%d/%m/%Y')}", divider="grey"
-                )
-
-            with col2.container():
-                col1, col2, col3, col4 = st.columns([1, 0.1, 0.8, 0.2])
-
-                st.session_state.manager_ger.set_refdate(refdate)
-
-                st.session_state.manager_ger.run()
-
-                df_resumo_indexadores = (
-                    st.session_state.manager_ger.df_resultados_indexadores_formated
-                )
-                df_classes_cred_privado = (
-                    st.session_state.manager_ger.df_cred_privado_classes_formated
-                )
-                df_classes_outros = (
-                    st.session_state.manager_ger.df_outras_classes_formated
-                )
-
-                col1.header("Resumo Classes", divider="grey")
-
-                col1.markdown(f"**Carteira Crédito Privado Consolidado:**")
-                col1.text(
-                    f"Exposição (R$): {st.session_state.manager_ger.credito_privado_exposicao_total}  "
-                    f"|  Alocação: {st.session_state.manager_ger.credito_privado_alocacao_total}  "
-                    f"|  Carrego: CDI + {st.session_state.manager_ger.credito_privado_carrego_total}  "
-                    f"|  Duration: {st.session_state.manager_ger.credito_privado_duration_total}"
-                )
-
-                col1.dataframe(
-                    df_classes_cred_privado, hide_index=True, use_container_width=True
-                )
-                col1.dataframe(
-                    df_classes_outros, hide_index=True, use_container_width=True
-                )
-
-                col1.markdown(f"**Carteira Consolidada antes Adm:**")
-                col1.text(
-                    f"Exposição (R$): {st.session_state.manager_ger.exposicao_total_antes_adm}  "
-                    f"|  Alocação: {st.session_state.manager_ger.alocacao_total_antes_adm}  "
-                    f"|  Carrego: CDI + {st.session_state.manager_ger.carrego_total_antes_adm}  "
-                    f"|  Duration: {st.session_state.manager_ger.duration_total_antes_adm}"
-                )
-
-                col1.text(
-                    f"Carrego pós ADM: CDI + {st.session_state.manager_ger.carrego_total_pos_adm}"
-                )
-
-                col1.header("Resumo Indexadores", divider="grey")
-                col1.markdown(f"**Carteira Crédito Privado Consolidado**")
-                col1.dataframe(
-                    df_resumo_indexadores, hide_index=True, use_container_width=True
-                )
-
-                fig_classes = px.pie(
-                    st.session_state.manager_ger.df_to_fig_classes,
-                    values="Exposição (R$)",
-                    names="Classe Ativo",
-                    title="Alocação Classe Ativos",
-                )
-
-                col3.plotly_chart(fig_classes)
-
-                fig_classes = px.pie(
-                    st.session_state.manager_ger.df_to_fig_indexador,
-                    values="Exposição (R$)",
-                    names="Indexador",
-                    title="Alocação Indexadores Ativos",
-                )
-
-                col3.plotly_chart(fig_classes)
-
-        with st.container(border=True):
-            col1, col2, col3 = st.columns([0.5, 10, 0.5])
-            col2.header("Debêntures", divider="grey")
-
-            emissores_debentures = st.session_state.manager_ger.emissores_debentures
-            df_debentures = st.session_state.manager_ger.df_debentures
-
-            for emissor in emissores_debentures.keys():
-                col2.text(
-                    f"Emissor: {emissor}  "
-                    f"|  Exposição (R$): {emissores_debentures[emissor][0]:,.0f}  "
-                    f"|  Alocação: {emissores_debentures[emissor][1]:,.2f}%  "
-                    f"|  Carrego: CDI + {emissores_debentures[emissor][2]:,.2f}%  "
-                    f"|  Duration: {int(emissores_debentures[emissor][3])}"
-                )
-
-                col2.dataframe(
-                    df_debentures.loc[
-                        df_debentures["Emissor"] == emissor,
-                        [
-                            "Ativo",
-                            "Indexador",
-                            "Exposição (R$)",
-                            "% Alocação",
-                            "Taxa de Emissão",
-                            "Carrego Original",
-                            "Carrego CDI +",
-                            "Duration",
-                            "Vencimento",
-                        ],
-                    ],
-                    hide_index=True,
-                    use_container_width=True,
-                )
-
-        with st.container(border=True):
-            col1, col2, col3 = st.columns([0.5, 10, 0.5])
-            col2.header("Letras Financeiras", divider="grey")
-
-            emissores_lfs = st.session_state.manager_ger.emissores_lfs
-            df_letras_financeiras = st.session_state.manager_ger.df_letras_financeiras
-
-            for emissor in emissores_lfs.keys():
-                col2.text(
-                    f"Emissor: {emissor}  "
-                    f"|  Exposição (R$): {emissores_lfs[emissor][0]:,.0f}  "
-                    f"|  Alocação: {emissores_lfs[emissor][1]:,.2f}%  "
-                    f"|  Carrego: CDI + {emissores_lfs[emissor][2]:,.2f}%  "
-                    f"|  Duration: {int(emissores_lfs[emissor][3])}"
-                )
-
-                col2.dataframe(
-                    df_letras_financeiras.loc[
-                        df_letras_financeiras["Emissor"] == emissor,
-                        [
-                            "Ativo",
-                            "Indexador",
-                            "Exposição (R$)",
-                            "% Alocação",
-                            "Taxa de Emissão",
-                            "Carrego Original",
-                            "Carrego CDI +",
-                            "Duration",
-                            "Vencimento",
-                        ],
-                    ],
-                    hide_index=True,
-                    use_container_width=True,
-                )
-
-        with st.container(border=True):
-            col1, col2, col3 = st.columns([0.5, 10, 0.5])
-            col2.header("FIDCs", divider="grey")
-
-            emissores_fidcs = st.session_state.manager_ger.emissores_fidcs
-            df_fidcs = st.session_state.manager_ger.df_fidcs
-
-            for emissor in emissores_fidcs.keys():
-                col2.text(
-                    f"Emissor: {emissor}  "
-                    f"|  Exposição (R$): {emissores_fidcs[emissor][0]:,.0f}  "
-                    f"|  Alocação: {emissores_fidcs[emissor][1]:,.2f}%  "
-                    f"|  Carrego: CDI + {emissores_fidcs[emissor][2]:,.2f}%  "
-                    f"|  Duration: {int(emissores_fidcs[emissor][3])}"
-                )
-
-                col2.dataframe(
-                    df_fidcs.loc[
-                        df_fidcs["Emissor"] == emissor,
-                        [
-                            "Ativo",
-                            "Indexador",
-                            "Exposição (R$)",
-                            "% Alocação",
-                            "Taxa de Emissão",
-                            "Carrego Original",
-                            "Carrego CDI +",
-                            "Duration",
-                            "Vencimento",
-                        ],
-                    ],
-                    hide_index=True,
-                    use_container_width=True,
-                )
-
-
 refdate = st.sidebar.date_input(
     label="Refdate",
     value=st.session_state.funcoes_pytools.workday_br(date.today(), -1),
@@ -538,58 +394,23 @@ if st.session_state["gerencial"] == True:
 
         # Botao download:
 
-        df_debentures = st.session_state.manager_ger.df_debentures
-        df_letras_financeiras = st.session_state.manager_ger.df_letras_financeiras
-        df_fidcs = st.session_state.manager_ger.df_fidcs
-
-        df_all = pd.concat([df_debentures, df_letras_financeiras, df_fidcs])
-
-        df_cadastro_emissor = st.session_state.manager_sql.select_dataframe(
-            "SELECT DISTINCT EMISSOR AS Emissor, GRUPO_ECONOMICO, TIPO_EMISSOR FROM TB_CADASTRO_EMISSOR"
-        )
-
-        df_cadastro_ativo = st.session_state.manager_sql.select_dataframe(
-            "SELECT DISTINCT ATIVO as Ativo, CLASSE_ATIVO as [Classe Ativo], TIPO_ATIVO as [Tipo Ativo] FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('DIVIDENDOS', 'Caixa', 'Provisões & Despesas', 'Ajuste Cisão', 'Fundos Caixa', 'Ações BR')"
-        )
-
-        df_all = pd.merge(df_all, df_cadastro_emissor, on="Emissor", how="left")
-        df_all = pd.merge(df_all, df_cadastro_ativo, on="Ativo", how="left")
-
-        df_all.rename(
-            columns={
-                "GRUPO_ECONOMICO": "Grupo Economico",
-                "TIPO_EMISSOR": "Tipo Emissor",
-            },
-            inplace=True,
-        )
-
-        df_all = df_all[
-            [
-                "Emissor",
-                "Tipo Emissor",
-                "Grupo Economico",
-                "Tipo Ativo",
-                "Ativo",
-                "Classe Ativo",
-                "Indexador",
-                "Exposição (R$)",
-                "% Alocação",
-                "Taxa de Emissão",
-                "Carrego Original",
-                "Carrego CDI +",
-                "Duration",
-                "Vencimento",
-            ]
-        ]
-
-        df_all.insert(0, "Refdate", refdate)
+        df_detalhe_ativos = get_excel_detalhe_ativos().copy()
+        df_fluxo_ativos = st.session_state.manager_ger.get_df_fluxo_ativos().copy()
 
         st.sidebar.divider()
 
         st.sidebar.download_button(
             label="Download - Detalhes Ativos",
-            data=save_to_excel(df_all),
+            data=save_to_excel(df_detalhe_ativos),
             file_name="detalhes_ativos.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        )
+
+        st.sidebar.download_button(
+            label="Download - Fluxo Ativos",
+            data=save_to_excel(df_fluxo_ativos),
+            file_name="fluxo_ativos.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
         )

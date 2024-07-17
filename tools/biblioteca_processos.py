@@ -1641,3 +1641,80 @@ class DadosBoletimB3:
 
             resp = self.manager_sql.insert_dataframe(df=self.df_negociosbalcao_rf, table_name="TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA")
             self.result_sql['Negócios Bancão RF'] = resp
+
+
+class DadosCarteirasAtivos:
+
+    def __init__(self, manager_sql=None, funcoes_pytools=None):
+
+        if manager_sql is None:
+            self.manager_sql = SQL_Manager()
+        else:
+            self.manager_sql = manager_sql
+
+        if funcoes_pytools is None:
+            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
+        else:
+            self.funcoes_pytools = funcoes_pytools
+
+        self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
+
+
+        self.dict_tipo_ativos_by_fundo = {}
+        self.dict_carteiras_by_refdate_fundo = {}
+        self.df_fluxo_futuro_ativos_by_refdate = pd.DataFrame()
+        self.df_posicao_ativos_by_refdate = pd.DataFrame()
+
+        self.lista_fundos = self.manager_sql.select_dataframe("SELECT DISTINCT FUNDO FROM TB_CARTEIRAS")['FUNDO'].tolist()
+
+        self.get_dict_list_tipo_ativos_by_fundos()
+
+        self.refdate = None
+
+    def set_refdate(self, refdate: date):
+    
+        self.refdate = refdate
+
+    def get_dict_list_tipo_ativos_by_fundos(self):
+
+        for fundo in self.lista_fundos:
+            self.dict_tipo_ativos_by_fundo[fundo] = self.manager_sql.select_dataframe(
+                f"SELECT DISTINCT TIPO_ATIVO FROM TB_CARTEIRAS WHERE FUNDO = '{fundo}'")['TIPO_ATIVO'].tolist()
+
+    def get_dict_df_carteiras_by_refdate_fundo(self):
+
+        if self.refdate is None:
+            return self.dict_carteiras_by_refdate_fundo
+
+        for fundo in self.lista_fundos:
+
+            self.dict_carteiras_by_refdate_fundo[fundo] = self.manager_sql.select_dataframe(
+                f"SELECT * FROM TB_CARTEIRAS WHERE REFDATE = '{self.refdate}' AND FUNDO = '{fundo}'")
+
+        return self.dict_carteiras_by_refdate_fundo
+
+    def get_df_fluxo_futuro_ativos_by_refdate(self, refdate=None):
+
+        if refdate is None:
+            p_refdate = self.refdate
+
+        if p_refdate is None:
+            return pd.DataFrame()
+
+        self.df_fluxo_futuro_ativos_by_refdate = self.manager_sql.select_dataframe(
+            f"SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE REFDATE = '{p_refdate}'")
+
+        return self.df_fluxo_futuro_ativos_by_refdate
+
+    def get_df_posicao_ativos_by_refdate(self, refdate=None):
+
+        if refdate is None:
+            p_refdate = self.refdate
+
+        if p_refdate is None:
+            return pd.DataFrame()
+
+        self.df_posicao_ativos_by_refdate = self.manager_sql.select_dataframe(
+            f"SELECT TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_POSICAO WHERE REFDATE = '{p_refdate}' AND QUANTIDADE_D0 > 0")
+
+        return self.df_posicao_ativos_by_refdate
