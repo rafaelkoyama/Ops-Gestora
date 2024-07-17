@@ -1191,18 +1191,18 @@ class liquidezAtivos:
 
         df_carteira = pd.concat([df_carteira, df_carteira_observaveis_sem_liquidez])
 
-        if (
-            len(
-                (
-                    set(df_carteira["ATIVO"].unique())
-                    - set(df_ativos_fluxo["ATIVO"].unique())
-                )
-            )
-            == 0
-        ):
-            print("Todos os ativos da carteira possuem fluxo futuro")
-        else:
-            print("Há ativos na carteira sem fluxo futuro")
+        # if (
+        #     len(
+        #         (
+        #             set(df_carteira["ATIVO"].unique())
+        #             - set(df_ativos_fluxo["ATIVO"].unique())
+        #         )
+        #     )
+        #     == 0
+        # ):
+        #     print("Todos os ativos da carteira possuem fluxo futuro")
+        # else:
+        #     print("Há ativos na carteira sem fluxo futuro")
 
         df_liquidez_fluxo = pd.merge(
             df_carteira, df_ativos_fluxo, on="ATIVO", how="left"
@@ -1251,3 +1251,38 @@ class liquidezAtivos:
         ].cumsum()
 
         self.df_resumo_liquidez_fluxo = df_resumo_liquidez_fluxo.copy()
+
+    def liquidez_fluxo_fidc(self):
+
+        df_fluxo_fidcs = self.manager_sql.select_dataframe(
+            f"SELECT DATA_LIQUIDACAO, ATIVO, VALOR FROM TB_FLUXO_PAGAMENTO_FIDC WHERE MONTH(REFDATE) = {self.refdate.month} AND YEAR(REFDATE) = {self.refdate.year}"
+        )
+
+        df_fluxo_fidcs = (
+            df_fluxo_fidcs.groupby(["DATA_LIQUIDACAO", "ATIVO"]).sum().reset_index()
+        )
+
+        df_fluxo_fidcs.insert(1, "Categoria", "Fluxo FIDC")
+
+        df_fluxo_fidcs.rename(
+            columns={
+                "DATA_LIQUIDACAO": "Data Liquidação",
+                "ATIVO": "Ativo",
+                "VALOR": "Liquidez gerada dia",
+            },
+            inplace=True,
+        )
+
+        df_resumo_fidcs = (
+            df_fluxo_fidcs[["Data Liquidação", "Categoria", "Liquidez gerada dia"]]
+            .groupby(["Data Liquidação", "Categoria"])
+            .sum()
+            .sort_values(by="Data Liquidação")
+            .reset_index()
+        )
+
+        df_resumo_fidcs["Liquidez total gerada"] = df_resumo_fidcs[
+            "Liquidez gerada dia"
+        ].cumsum()
+
+        self.df_resumo_liquidez_fluxo_fidc = df_resumo_fidcs.copy()
