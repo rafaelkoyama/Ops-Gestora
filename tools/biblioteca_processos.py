@@ -834,7 +834,7 @@ class UploadArquivosXML:
             self.fundo = fundo
 
             self.file_name = (
-                f"C:\\Users\\RafaelKoyama\\Strix Capital\\Backoffice - General\\Carteiras\\"
+                f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\"
                 f"{self.dict_suporte_xml[self.fundo]}\\xml\\{self.fundo.replace(' ', '_')}_{self.refdate.strftime('%Y%m%d')}.xml"
             )
             if self.verifica_arquivo_existe(self.file_name):
