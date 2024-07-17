@@ -488,12 +488,12 @@ class OutlookHandler:
 
 class Graficos:
 
-    def to_percent(self, y, position):
+    def to_percent(self, y, position, decimals=2):
         _ = position
-        s = f"{100 * y:.1f}%"
+        s = f"{100 * y:.{decimals}f}%"
         return s
 
-    def graficoLinhas(self, df_dados:pd.DataFrame, titulo_grafico:str=None, label_dados:str=None, label_eixo_y:str=None, tamanho_fig=(12, 6), dados_percent=True):
+    def graficoLinhas(self, df_dados:pd.DataFrame, titulo_grafico:str=None, label_dados:str=None, label_eixo_y:str=None, tamanho_fig=(12, 6), dados_percent=True, decimals=2):
 
         df_dados = df_dados.values.tolist()
         refdates, dados = zip(*df_dados)
@@ -521,13 +521,15 @@ class Graficos:
             plt.ylabel(label_eixo_y)
 
         if dados_percent:
-            formatter = FuncFormatter(self.to_percent)
+            formatter = FuncFormatter(lambda x, pos: self.to_percent(x, pos, decimals))
             plt.gca().yaxis.set_major_formatter(formatter)
 
-        if len(refdates) < 20:
-            intervalo = int(len(refdates) / 5)
+        qtd_refdates = len(refdates)
+
+        if qtd_refdates < 15:
+            intervalo = 1
         else:
-            intervalo = int(len(refdates) / 20)
+            intervalo = int(len(refdates) / 15)
 
         plt.xticks(
             ticks=np.arange(len(refdates))[::intervalo],
