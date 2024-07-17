@@ -117,7 +117,8 @@ def get_excel_detalhe_ativos():
     )
 
     df_cadastro_ativo = st.session_state.manager_sql.select_dataframe(
-        "SELECT DISTINCT ATIVO as Ativo, CLASSE_ATIVO as [Classe Ativo], TIPO_ATIVO as [Tipo Ativo] FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('DIVIDENDOS', 'Caixa', 'Provisões & Despesas', 'Ajuste Cisão', 'Fundos Caixa', 'Ações BR')"
+        "SELECT DISTINCT ATIVO as Ativo, CLASSE_ATIVO as [Classe Ativo], TIPO_ATIVO as [Tipo Ativo], SETOR as Setor "
+        "FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('DIVIDENDOS', 'Caixa', 'Provisões & Despesas', 'Ajuste Cisão', 'Fundos Caixa', 'Ações BR')"
     )
 
     df_all = pd.merge(df_all, df_cadastro_emissor, on="Emissor", how="left")
@@ -139,6 +140,7 @@ def get_excel_detalhe_ativos():
             "Tipo Ativo",
             "Ativo",
             "Classe Ativo",
+            "Setor",
             "Indexador",
             "Exposição (R$)",
             "% Alocação",
@@ -597,7 +599,6 @@ if st.session_state["gerencial"] == True:
                     hide_index=True,
                     use_container_width=True,
                 )
-
 
 if st.session_state["fluxo_caixas"] == True:
     LogoStrix()
