@@ -8,7 +8,7 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
-append_paths()
+# append_paths()
 
 # -----------------------------------------------------------------------
 
@@ -30,10 +30,7 @@ st.set_page_config(
 )
 
 lista_states = [
-    "extrato_cc_fundos",
-    "movs_passivo_fundos",
-    "passivos_cotizar",
-    "contatos_btg",
+    "run_grafico_yields",
 ]
 
 if "manager_sql" not in st.session_state:
@@ -46,8 +43,8 @@ if "graficos" not in st.session_state:
     st.session_state.graficos = Graficos()
 
 
-if "logo_backoffice" not in st.session_state:
-    st.session_state.logo_backoffice = True
+if "logo_credito_privado" not in st.session_state:
+    st.session_state.logo_credito_privado = True
 
 
 for state in lista_states:
@@ -74,14 +71,11 @@ def LogoStrix():
         col1, col2, col3 = st.columns([1, 2, 0.1])
         col2.image(
             os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
-            width=500,
+            width=300,
         )
 
 
-LogoStrix()
-
-with st.container():
-    col1, col2, col3 = st.columns([0.8, 1.1, 1.3])
+def get_df_yields():
 
     df_base_btg = st.session_state.manager_sql.select_dataframe(
         f"SELECT ATIVO, REFDATE, TAXA AS TAXA_BTG FROM TB_PRECOS WHERE TIPO_ATIVO = 'DEBÊNTURE' AND FONTE = 'BTG' AND TAXA IS NOT NULL AND TAXA <> 0 ORDER BY ATIVO, REFDATE"
@@ -108,23 +102,97 @@ with st.container():
         .reset_index(drop=True)
     )
 
-    ativos = df_base["ATIVO"].unique()
+    return df_base
 
-    i = 0
 
-    wait_ger = st.sidebar.empty()
+if "df_base_yields" not in st.session_state:
+    st.session_state.df_base_yields = get_df_yields()
 
-    wait_ger.error("Aguarde, gerando gráficos...")
+if "select_ativos" not in st.session_state:
+    st.session_state.select_ativos = []
 
-    for ativo in ativos:
-        df_ativo = df_base[df_base["ATIVO"] == ativo][["REFDATE", "TAXA"]].copy()
-        col2.subheader(f"        Yield {ativo}")
-        plt = st.session_state.graficos.graficoLinhas(
-            df_dados=df_ativo, titulo_grafico=ativo
-        )
-        col2.pyplot(plt)
-        plt.close()
 
-    wait_ger.success("Gráficos gerados com sucesso!")
-    sleep(1)
-    wait_ger.empty()
+opt_selecao = st.sidebar.radio(
+    label="Opção",
+    options=["Todos os Ativos", "Selecionar Ativos"],
+    on_change=desliga_states,
+)
+
+
+print(opt_selecao)
+
+if opt_selecao == "Selecionar Ativos":
+
+    st.session_state.select_ativos = st.sidebar.multiselect(
+        "Ativos",
+        st.session_state.df_base_yields["ATIVO"].unique(),
+        default=[],
+    )
+
+else:
+    st.session_state.select_ativos = st.session_state.df_base_yields["ATIVO"].unique()
+
+
+st.sidebar.button(
+    "Gerar graficos",
+    on_click=select_state,
+    args=("run_grafico_yields",),
+    use_container_width=True,
+)
+
+
+if st.session_state.run_grafico_yields:
+
+    LogoStrix()
+
+    with st.container():
+
+        col1, col2, col3 = st.columns([1, 1, 1])
+
+        df_base = st.session_state.df_base_yields.copy()
+
+        # ativos = df_base["ATIVO"].unique()
+
+        i = 0
+        r = 0
+
+        wait_ger = st.sidebar.empty()
+
+        wait_ger.error("Aguarde, gerando gráficos...")
+
+        for ativo in st.session_state.select_ativos:
+            df_ativo = df_base[df_base["ATIVO"] == ativo][["REFDATE", "TAXA"]].copy()
+
+            if i == 0:
+                plt = st.session_state.graficos.graficoLinhas(
+                    df_dados=df_ativo,
+                    titulo_grafico=f"Yield - {ativo}",
+                    style="dark_background",
+                )
+                col1.pyplot(plt)
+                plt.close()
+                i += 1
+
+            elif i == 1:
+                plt = st.session_state.graficos.graficoLinhas(
+                    df_dados=df_ativo,
+                    titulo_grafico=f"Yield - {ativo}",
+                    style="Solarize_Light2",
+                )
+                col2.pyplot(plt)
+                plt.close()
+                i += 1
+
+            elif i == 2:
+                plt = st.session_state.graficos.graficoLinhas(
+                    df_dados=df_ativo,
+                    titulo_grafico=f"Yield - {ativo}",
+                    style="tableau-colorblind10",
+                )
+                col3.pyplot(plt)
+                plt.close()
+                i = 0
+
+        wait_ger.success("Gráficos gerados com sucesso!")
+        sleep(1)
+        wait_ger.empty()
