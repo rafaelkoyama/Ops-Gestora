@@ -120,11 +120,11 @@ with st.container():
         df_ativo = df_base[df_base["ATIVO"] == ativo][["REFDATE", "TAXA"]].copy()
         col2.subheader(f"        Yield {ativo}")
         plt = st.session_state.graficos.graficoLinhas(
-            df_dados=df_ativo, titulo_grafico=""
+            df_dados=df_ativo, titulo_grafico=ativo
         )
         col2.pyplot(plt)
         plt.close()
 
     wait_ger.success("Gráficos gerados com sucesso!")
-    sleep(2)
+    sleep(1)
     wait_ger.empty()
