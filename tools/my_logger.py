@@ -22,7 +22,7 @@ from tools.db_helper import SQL_Manager
 
 class Logger:
 
-    def __init__(self, manager_sql=None):
+    def __init__(self, manager_sql=None, original_script=None):
 
         self.user = os.getlogin()
         self.refdate = datetime.today().strftime("%Y-%m-%d")
@@ -48,6 +48,8 @@ class Logger:
             self.manager_sql = SQL_Manager()
         else:
             self.manager_sql = manager_sql
+
+        self.original_script = original_script
 
     def insert_sql(self, list_values: list):
         self.manager_sql.insert_manual(self.tb, self.list_columns, list_values)
@@ -114,7 +116,7 @@ class Logger:
             self.refdate,
             self.index_log,
             self.user,
-            script_original,
+            script_original if self.original_script is None else self.original_script,
             self.get_current_line_number(),
             self.script_running_name,
             self.now_log(),
@@ -142,7 +144,7 @@ class Logger:
             self.refdate,
             self.index_log,
             self.user,
-            script_original,
+            script_original if self.original_script is None else self.original_script,
             self.get_current_line_number(),
             self.script_running_name,
             self.now_log(),
@@ -152,7 +154,7 @@ class Logger:
 
         self.insert_sql(log_entry)
 
-    def info(self, log_message, script_original):
+    def info(self, log_message, script_original=None):
 
         """
         Registra uma mensagem de info no banco de dados de logs.
@@ -170,7 +172,7 @@ class Logger:
             self.refdate,
             self.index_log,
             self.user,
-            script_original,
+            script_original if self.original_script is None else self.original_script,
             self.get_current_line_number(),
             self.script_running_name,
             self.now_log(),
@@ -203,7 +205,7 @@ class Logger:
             self.refdate,
             self.index_log,
             self.user,
-            script_original,
+            script_original if self.original_script is None else self.original_script,
             self.script_original_line,
             self.script_running_name,
             self.datetime_run,
