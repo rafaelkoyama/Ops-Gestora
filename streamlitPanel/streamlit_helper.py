@@ -20,7 +20,11 @@ from dateutil.relativedelta import relativedelta
 
 from tools.biblioteca_processos import DadosCarteirasAtivos
 from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
 from tools.py_tools import FuncoesPyTools
+
+# -----------------------------------------------------------------------
+
 
 opcoes_fundos = [
     "Strix Yield Master",
@@ -1163,3 +1167,22 @@ class passivosCotizar:
         df.drop(columns=["COTA_AUX"], inplace=True)
 
         self.df_passivos_cotizar = df.copy()
+
+
+class riscoLiquidezFundos:
+
+    def __init__(self, manager_sql=None, funcoes_pytools=None):
+
+        if manager_sql is None:
+            self.manager_sql = SQL_Manager()
+        else:
+            self.manager_sql = manager_sql
+
+        if funcoes_pytools is None:
+            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
+        else:
+            self.funcoes_pytools = funcoes_pytools
+
+        self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
+
+        self.lista_titulos_publicos = ["Tit. Publicos", "Compromissada"]

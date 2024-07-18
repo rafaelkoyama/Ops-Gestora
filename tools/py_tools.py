@@ -247,23 +247,25 @@ class FuncoesPyTools:
         result = ', '.join(str_elements + num_elements)
         return result
 
+    def format_df_float_columns_to_str(self, df: pd.DataFrame, columns: list, decimals: int = 2):
+        """
+        Formata as colunas especificadas de um DataFrame como strings com o número especificado de casas decimais.
 
-    # def captura_dado_unico_sql(self, conn, strSQL):
-    #     cursor = conn.cursor()
-    #     cursor.execute(strSQL)
-    #     result = cursor.fetchone()
-    #     cursor.close()
-    #     if result is None:
-    #         return None
-    #     else:
-    #         return result[0]
+        Args:
+            df (pd.DataFrame): O DataFrame a ser formatado.
+            columns (list): Lista de nomes das colunas a serem formatadas.
+            decimals (int): Número de casas decimais para formatação. Padrão é 2.
 
-    # def captura_dados_sql(self, conn, strSQL):
-    #     cursor = conn.cursor()
-    #     cursor.execute(strSQL)
-    #     result = cursor.fetchall()
-    #     cursor.close()
-    #     return result
+        Returns:
+            pd.DataFrame: O DataFrame com as colunas especificadas formatadas como strings.
+        """
+
+        for column in columns:
+            if column in df.columns and pd.api.types.is_numeric_dtype(df[column]):
+                df[column] = df[column].apply(lambda x: f"{x:,.{decimals}f}")
+
+        return df
+
 
 class ProcessManagerOutlook:
 

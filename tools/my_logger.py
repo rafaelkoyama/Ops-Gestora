@@ -97,7 +97,7 @@ class Logger:
 
         mail.Send()
 
-    def debug(self, log_message, script_original):
+    def debug(self, log_message, script_original=None):
 
         """
         Registra uma mensagem de depuração no banco de dados de logs.
@@ -126,7 +126,7 @@ class Logger:
 
         self.insert_sql(log_entry)
 
-    def error(self, log_message, script_original):
+    def error(self, log_message, script_original=None):
 
         """
         Registra uma mensagem de erro no banco de dados de logs.
@@ -182,7 +182,7 @@ class Logger:
 
         self.insert_sql(log_entry)
 
-    def critical(self, log_message, script_original):
+    def critical(self, log_message, script_original=None):
 
         """
         Registra uma mensagem de erro critico no banco de dados de logs.
