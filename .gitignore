@@ -3,3 +3,4 @@
 *.pyc
 Testes/
 sync_to_production.sh
+.prettierrc

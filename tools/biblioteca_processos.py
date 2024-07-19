@@ -492,9 +492,6 @@ class UploadArquivosXML:
                     if subdado.tag in [
                         "pucompra",
                         "puvencimento",
-                        "puposicao",
-                        "puemissao",
-                        "principal",
                         "tributos",
                         "valorfindisp",
                         "valorfinemgar",
@@ -1718,3 +1715,69 @@ class DadosCarteirasAtivos:
             f"SELECT TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_POSICAO WHERE REFDATE = '{p_refdate}' AND QUANTIDADE_D0 > 0")
 
         return self.df_posicao_ativos_by_refdate
+
+
+class capturaDados:
+
+    def __init__(self, manager_sql=None, funcoes_pytools=None):
+
+        if manager_sql is None:
+            self.manager_sql = SQL_Manager()
+        else:
+            self.manager_sql = manager_sql
+
+        if funcoes_pytools is None:
+            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
+        else:
+            self.funcoes_pytools = funcoes_pytools
+
+        self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
+        self.logger.info(log_message="class - capturaDados - Iniciado")
+
+    def baseB3NegociosBalcaoRendaFixa(self, refdate: date, refdateInicio: date = None) -> pd.DataFrame:
+        """
+        Captura a base de negócios de balcão de renda fixa da B3.
+
+        Esta função consulta a tabela TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA no banco de dados para obter
+        os negócios de renda fixa com base na data de referência fornecida.
+
+        Args:
+            refdate (date): Data de referência dos trades ou Data final de referênca caso refdateInicio seja != None.
+            refdateInicio (date, opcional): Data de início do intervalo de referência dos trades. 
+                                            Por padrão, é None e não utilizado na consulta atual.
+
+        Returns:
+            pd.DataFrame: DataFrame contendo os registros dos negócios de balcão de renda fixa
+                          da B3 para a data ou período de referência.
+        
+        Exemplo:
+            >>> manager_captura = capturaDados()
+            >>> df_negocios = captura.baseB3NegociosBalcaoRendaFixa(refdate=date(2023, 7, 18))
+            >>> print(df_negocios.head(1))
+        """
+
+
+        try:
+
+            if refdateInicio is None:
+                str_condition = f"REFDATE = '{refdate}'"
+            else:
+                str_condition = f"REFDATE BETWEEN '{refdateInicio}' AND '{refdate}'"
+
+
+            df = self.manager_sql.select_dataframe(
+                f"SELECT * FROM TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA WHERE {str_condition}"
+            )
+
+            self.logger.info(log_message="capturaDados - baseB3NegociosBalcaoRendaFixa - ok")
+
+            return df
+
+        except Exception as e:
+            self.logger.error(log_message=f"capturaDados - baseB3NegociosBalcaoRendaFixa - {str(e)}")
+            raise
+
+
+
+
+
