@@ -173,6 +173,41 @@ class FuncoesPyTools:
 
         return data_ref
 
+    def diasCorridos_br(self, refdate, dias):
+        data_ref = refdate
+        count_days = 0
+        loops = abs(dias)
+
+        while count_days < loops:
+            if dias > 0:
+                data_ref = data_ref + timedelta(days=1)
+            else:
+                data_ref = data_ref - timedelta(days=1)
+            count_days += 1
+
+        while data_ref.weekday() not in self.dias_semana or data_ref in self.feriados_br:
+            if data_ref.weekday() not in self.dias_semana:
+                is_weekday = False
+            else:
+                is_weekday = True
+
+            if data_ref in self.feriados_br:
+                is_holiday = True
+            else:
+                is_holiday = False
+
+            if is_weekday and not is_holiday:
+                break
+            else:
+                if dias > 0:
+                    data_ref = data_ref + timedelta(days=1)
+                else:
+                    data_ref = data_ref - timedelta(days=1)
+
+        return data_ref
+
+
+
     def dias_corridos(self, data_inicio, data_fim):
         dif = data_fim - data_inicio
         return int(dif.days)
