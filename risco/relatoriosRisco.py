@@ -1,4 +1,17 @@
+# Import bibliotecas:
+import os
+from datetime import date
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from __init__ import *
+from matplotlib.ticker import FuncFormatter
+from scipy.stats import norm
+
+from tools.biblioteca_processos import capturaDados
+from tools.db_helper import SQL_Manager
+from tools.py_tools import FuncoesPyTools
 
 VERSION_APP = "2.0.2"
 VERSION_REFDATE = "2024-07-15"
@@ -11,20 +24,6 @@ if ENVIRONMENT == "DEVELOPMENT":
 # append_paths()
 
 # -----------------------------------------------------------------------
-
-# Import bibliotecas:
-
-from datetime import date
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from matplotlib.ticker import FuncFormatter
-from scipy.stats import norm
-
-from tools.biblioteca_processos import capturaDados
-from tools.db_helper import SQL_Manager
-from tools.py_tools import FuncoesPyTools
 
 # -----------------------------------------------------------------------
 
@@ -169,7 +168,7 @@ class enquadramentoCarteira:
 
     def call_enquadramento_modalidade_ativos_com_limite(self):
 
-        df_carteira = self.df_carteira_yield_master.copy()
+        df_carteira = self.df_carteira_yield_master
 
         df_carteira["MODALIDADE_ENQUADRAMENTO"] = df_carteira["ATIVO"].map(
             self.dict_modalidade_ativos

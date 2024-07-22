@@ -492,6 +492,9 @@ class UploadArquivosXML:
                     if subdado.tag in [
                         "pucompra",
                         "puvencimento",
+                        "puposicao",
+                        "puemissao",
+                        "principal",
                         "tributos",
                         "valorfindisp",
                         "valorfinemgar",
