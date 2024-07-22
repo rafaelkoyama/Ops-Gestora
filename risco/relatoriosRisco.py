@@ -88,8 +88,9 @@ class enquadramentoCarteira:
     def call_dados_yield_master(self):
 
         self.df_carteira_yield_master = self.manager_sql.select_dataframe(
-            f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, FINANCEIRO_D0 FROM TB_CARTEIRAS "
-            f"WHERE REFDATE = '{self.refdate.strftime('%Y-%m-%d')}' AND FUNDO = 'STRIX YIELD MASTER' AND FINANCEIRO_D0 > 0.1"
+            "SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, FINANCEIRO_D0 FROM TB_CARTEIRAS "
+            f"WHERE REFDATE = '{self.refdate.strftime('%Y-%m-%d')}' "
+            "AND FUNDO = 'STRIX YIELD MASTER' AND FINANCEIRO_D0 > 0.1"
         )
 
         self.pl_yield_master = self.manager_sql.select_dataframe(
@@ -134,7 +135,7 @@ class enquadramentoCarteira:
 
         self.dict_modalidade_ativos = (
             self.manager_sql.select_dataframe(
-                f"SELECT DISTINCT ATIVO, MODALIDADE_ENQUADRAMENTO FROM TB_CADASTRO_ATIVOS"
+                "SELECT DISTINCT ATIVO, MODALIDADE_ENQUADRAMENTO FROM TB_CADASTRO_ATIVOS"
             )
             .set_index("ATIVO")["MODALIDADE_ENQUADRAMENTO"]
             .to_dict()
@@ -142,14 +143,14 @@ class enquadramentoCarteira:
 
         self.dict_cad_ativo = (
             self.manager_sql.select_dataframe(
-                f"SELECT DISTINCT ATIVO, EMISSOR FROM TB_CADASTRO_ATIVOS WHERE EMISSOR IS NOT NULL"
+                "SELECT DISTINCT ATIVO, EMISSOR FROM TB_CADASTRO_ATIVOS WHERE EMISSOR IS NOT NULL"
             )
             .set_index("ATIVO")["EMISSOR"]
             .to_dict()
         )
 
         self.df_cad_emissor = self.manager_sql.select_dataframe(
-            f"SELECT * FROM TB_CADASTRO_EMISSOR"
+            "SELECT * FROM TB_CADASTRO_EMISSOR"
         )
 
         self.dict_limites_grupo_economico = {
@@ -475,7 +476,8 @@ class dadosRiscoFundos:
     def set_suporte_dados(self):
 
         self.df_suporte_dados = self.manager_sql.select_dataframe(
-            f"SELECT REFDATE, COTA_LIQUIDA, VAR_COTA_DIA/100 AS VAR_COTA_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA "
+            f"SELECT REFDATE, COTA_LIQUIDA, VAR_COTA_DIA/100 AS VAR_COTA_DIA "
+            "FROM TB_BASE_BTG_PERFORMANCE_COTA "
             f"WHERE FUNDO = '{self.fundo}' AND REFDATE <= '{self.refdate}' "
             f"ORDER BY REFDATE"
         )
@@ -677,7 +679,8 @@ class dadosRiscoFundos:
 
         df_benchmark = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT REFDATE, COTA_INDEXADOR FROM TB_INDEXADORES "
-            f"WHERE REFDATE >= (SELECT MIN(REFDATE) FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE FUNDO = '{self.fundo}') "
+            f"WHERE REFDATE >= (SELECT MIN(REFDATE) FROM TB_BASE_BTG_PERFORMANCE_COTA "
+            f"WHERE FUNDO = '{self.fundo}') "
             f"AND REFDATE <= '{self.refdate}' "
             f"AND INDEXADOR = '{self.dict_suporte[self.fundo]}' "
             f"ORDER BY REFDATE"
@@ -925,7 +928,8 @@ class liquidezAtivos:
 
         df = self.manager_sql.select_dataframe(
             f"SELECT COD_IF, SUM(FINANCEIRO) AS FINANCEIRO FROM TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA "
-            f"WHERE REFDATE >= '{self.dmenos21}' AND REFDATE < '{self.refdate}' AND [STATUS] = 'Confirmado' "
+            f"WHERE REFDATE >= '{self.dmenos21}' AND REFDATE < '{self.refdate}' "
+            f"AND [STATUS] = 'Confirmado' "
             f"AND COD_IF IN ({str_lista_ativos_observaveis}) GROUP BY COD_IF"
         )
 
@@ -934,9 +938,11 @@ class liquidezAtivos:
     def set_df_carteira_fundos(self):
 
         df = self.manager_sql.select_dataframe(
-            f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO], SUM(QUANTIDADE_D0) [QUANTIDADE] FROM TB_CARTEIRAS "
-            f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO NOT IN ('Ajuste Cisão', 'Provisões & Despesas') AND FINANCEIRO_D0 > 0 "
-            f"GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
+            "SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO], "
+            "SUM(QUANTIDADE_D0) [QUANTIDADE] FROM TB_CARTEIRAS "
+            f"WHERE REFDATE = '{self.refdate}' AND "
+            "TIPO_ATIVO NOT IN ('Ajuste Cisão', 'Provisões & Despesas') AND FINANCEIRO_D0 > 0 "
+            "GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
         )
 
         self.df_carteira_fundos = df.copy()
@@ -975,6 +981,8 @@ class liquidezAtivos:
         self.liquidez_fluxo_fidc()
 
         self.liquidez_fluxo_fundos()
+
+        self.set_df_resumo_liquidez_all()
 
     def isRefdateSet(self):
 
@@ -1170,7 +1178,7 @@ class liquidezAtivos:
 
             return df_liquidez_diaria, df_resumo_liquidez
 
-        self.df_base_liquidez_diaria_observavel, self.df_resumo_observavel = (
+        self.df_base_liquidez_diaria_observavel, self.df_resumo_liquidez_observavel = (
             set_df_base()
         )
 
@@ -1183,8 +1191,10 @@ class liquidezAtivos:
             )
 
             df = self.manager_sql.select_dataframe(
-                f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) [FINANCEIRO] FROM TB_CARTEIRAS "
-                f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ({str_lista_tipo_ativos}) AND QUANTIDADE_D0 > 0 "
+                f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, ROUND(SUM(FINANCEIRO_D0),2) "
+                "[FINANCEIRO] FROM TB_CARTEIRAS "
+                f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ({str_lista_tipo_ativos}) "
+                "AND QUANTIDADE_D0 > 0 "
                 f"GROUP BY REFDATE, FUNDO, TIPO_ATIVO, ATIVO"
             )
 
@@ -1300,9 +1310,25 @@ class liquidezAtivos:
                 by=["Fundo", "Refdate", "Ativo"]
             ).reset_index(drop=True)
 
-            self.df_base_liquidez_diaria_tit_publicos = df_base_tit_publicos.copy()
+            df_base_liquidez_diaria_tit_publicos = df_base_tit_publicos.copy()
 
-        set_df_liquidez_tit_publicos()
+            # Trabalha a df de resumo
+            df_base = df_base_tit_publicos.copy()
+            df_resumo = pd.DataFrame()
+            fundos = df_base['Fundo'].unique()
+
+            for fundo in fundos:
+                df_fundo = df_base[df_base['Fundo'] == fundo][[
+                    'Refdate', 'Fundo', 'Categoria', 'Posição dia', 'Premissa venda', 'Saldo posição dia', 'Liquidez gerada dia']].copy()
+                df_fundo = df_fundo.groupby(['Refdate', 'Fundo', 'Categoria']).sum().sort_values(by=['Refdate']).reset_index()
+                df_fundo['Liquidez total gerada'] = df_fundo['Liquidez gerada dia'].cumsum()
+                df_resumo = pd.concat([df_resumo, df_fundo])
+
+            df_resumo.reset_index(drop=True, inplace=True)
+
+            return df_base_liquidez_diaria_tit_publicos, df_resumo
+
+        self.df_base_liquidez_diaria_tit_publicos, self.df_resumo_liquidez_tit_publicos = set_df_liquidez_tit_publicos()
 
     def liquidez_fluxo(self):
 
@@ -1327,10 +1353,12 @@ class liquidezAtivos:
             )
 
             df_ativos_fluxo = self.manager_sql.select_dataframe(
-                f"SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO NOT IN ({str_observaveis})"
+                "SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE "
+                f"REFDATE = '{self.refdate}' AND TIPO_ATIVO NOT IN ({str_observaveis})"
             )
             df_fluxo_observaveis_sem_liquidez = self.manager_sql.select_dataframe(
-                f"SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE REFDATE = '{self.refdate}' AND ATIVO IN ({str_sem_liquidez})"
+                f"SELECT * FROM TB_FLUXO_FUTURO_ATIVOS WHERE REFDATE = '{self.refdate}' "
+                f"AND ATIVO IN ({str_sem_liquidez})"
             )
 
             df_ativos_fluxo = pd.concat(
@@ -1342,13 +1370,15 @@ class liquidezAtivos:
             ]
 
             df_carteira = self.manager_sql.select_dataframe(
-                f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_CARTEIRAS WHERE "
-                f"REFDATE = '{self.refdate}' AND FINANCEIRO_D0 > 0 AND TIPO_ATIVO IN ({str_tipo_ativos_fluxo})"
+                "SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_CARTEIRAS WHERE "
+                f"REFDATE = '{self.refdate}' AND FINANCEIRO_D0 > 0 "
+                f"AND TIPO_ATIVO IN ({str_tipo_ativos_fluxo})"
             )
 
             df_carteira_observaveis_sem_liquidez = self.manager_sql.select_dataframe(
-                f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_CARTEIRAS WHERE "
-                f"REFDATE = '{self.refdate}' AND FINANCEIRO_D0 > 0 AND ATIVO IN ({str_sem_liquidez})"
+                "SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, QUANTIDADE_D0 FROM TB_CARTEIRAS WHERE "
+                f"REFDATE = '{self.refdate}' "
+                f"AND FINANCEIRO_D0 > 0 AND ATIVO IN ({str_sem_liquidez})"
             )
 
             df_carteira = pd.concat([df_carteira, df_carteira_observaveis_sem_liquidez])
@@ -1439,7 +1469,9 @@ class liquidezAtivos:
         def set_df_base_to_work():
 
             df = self.manager_sql.select_dataframe(
-                f"SELECT DATA_LIQUIDACAO, ATIVO, VALOR FROM TB_FLUXO_PAGAMENTO_FIDC WHERE MONTH(REFDATE) = {self.refdate.month} AND YEAR(REFDATE) = {self.refdate.year}"
+                "SELECT DATA_LIQUIDACAO, ATIVO, VALOR FROM TB_FLUXO_PAGAMENTO_FIDC "
+                f"WHERE MONTH(REFDATE) = {self.refdate.month} "
+                f"AND YEAR(REFDATE) = {self.refdate.year}"
             )
 
             return df
@@ -1530,13 +1562,18 @@ class liquidezAtivos:
         def set_df_base_to_work():
 
             df_carteira = self.manager_sql.select_dataframe(
-                f"SELECT REFDATE, FUNDO, TIPO_ATIVO, ATIVO, FINANCEIRO_D0 FROM TB_CARTEIRAS "
-                f"WHERE REFDATE = '{self.refdate}' AND TIPO_ATIVO IN ({self.funcoes_pytools.convert_list_to_str(self.lista_tipo_ativos_fundos)}) AND FINANCEIRO_D0 > 0"
+                "SELECT REFDATE, FUNDO, ATIVO, FINANCEIRO_D0 FROM TB_CARTEIRAS "
+                f"WHERE REFDATE = '{self.refdate}' AND "
+                "TIPO_ATIVO IN "
+                f"({self.funcoes_pytools.convert_list_to_str(self.lista_tipo_ativos_fundos)}) "
+                "AND FINANCEIRO_D0 > 0"
             )
 
             df_cadastro_fundos = self.manager_sql.select_dataframe(
-                f"SELECT DISTINCT ATIVO, TIPO_COTIZACAO_RESGATE, DIAS_COTIZACAO_RESGATE, TIPO_LIQUIDACAO_RESGATE, DIAS_LIQUIDACAO_RESGATE FROM TB_CADASTRO_ATIVOS "
-                f"WHERE TIPO_ATIVO IN ({self.funcoes_pytools.convert_list_to_str(self.lista_tipo_ativos_fundos)})"
+                "SELECT DISTINCT ATIVO, TIPO_COTIZACAO_RESGATE, DIAS_COTIZACAO_RESGATE, "
+                "TIPO_LIQUIDACAO_RESGATE, DIAS_LIQUIDACAO_RESGATE FROM TB_CADASTRO_ATIVOS "
+                "WHERE TIPO_ATIVO IN "
+                f"({self.funcoes_pytools.convert_list_to_str(self.lista_tipo_ativos_fundos)})"
             )
 
             df = pd.merge(df_carteira, df_cadastro_fundos, on="ATIVO", how="left")
@@ -1553,14 +1590,13 @@ class liquidezAtivos:
 
             df_fundos = (
                 df_fundos[
-                    ["DATA_LIQUIDACAO", "FUNDO", "TIPO_ATIVO", "ATIVO", "FINANCEIRO_D0"]
+                    ["DATA_LIQUIDACAO", "FUNDO", "ATIVO", "FINANCEIRO_D0"]
                 ]
                 .rename(
                     columns={
                         "DATA_LIQUIDACAO": "Refdate",
                         "FUNDO": "Fundo",
                         "FINANCEIRO_D0": "Liquidez gerada dia",
-                        "TIPO_ATIVO": "Tipo Ativo",
                         "ATIVO": "Ativo",
                     }
                 )
@@ -1601,3 +1637,49 @@ class liquidezAtivos:
         self.df_base_liquidez_diaria_fluxo_fundos, self.df_resumo_liquidez_fundos = (
             set_df_bases_fluxo_fundos()
         )
+
+    def set_df_resumo_liquidez_all(self):
+
+        def set_df_categoria_fluxo_all():
+
+            # Juntando todos categoria Fluxo
+            df_resumo_fluxo = self.df_resumo_liquidez_fluxo
+            df_resumo_fluxo_fidcs = self.df_resumo_liquidez_fidcs
+            df_resumo_fluxo_fundos = self.df_resumo_liquidez_fundos
+        
+            df_fluxo_all = pd.concat(
+                [df_resumo_fluxo, df_resumo_fluxo_fidcs, df_resumo_fluxo_fundos],
+                axis=0).sort_values(by=['Fundo', 'Refdate']).reset_index(drop=True)
+
+            df_resumo_fluxo_all = pd.DataFrame()
+            fundos = df_fluxo_all['Fundo'].unique()
+            for fundo in fundos:
+                df_fundo = df_fluxo_all[df_fluxo_all['Fundo'] == fundo][['Refdate', 'Fundo', 'Liquidez gerada dia']].copy()
+                df_fundo = df_fundo.groupby(['Refdate', 'Fundo']).sum().reset_index()
+                df_fundo.loc[:, 'Liquidez total gerada'] = df_fundo['Liquidez gerada dia'].cumsum()
+                df_resumo_fluxo_all = pd.concat([df_resumo_fluxo_all, df_fundo], axis=0)
+
+            return df_resumo_fluxo_all
+
+        def set_df_resumo_all():
+
+            df_resumo_liquidez_tit_publicos = self.df_resumo_liquidez_tit_publicos[
+                ['Refdate', 'Fundo', 'Liquidez gerada dia', 'Liquidez total gerada']].copy()
+            df_resumo_liquidez_observavel = self.df_resumo_liquidez_observavel[
+                ['Refdate', 'Fundo', 'Liquidez gerada dia', 'Liquidez total gerada']].copy()
+
+            df_all = pd.concat([self.df_resumo_liquidez_fluxo_all, df_resumo_liquidez_tit_publicos, df_resumo_liquidez_observavel])
+
+            df_resumo_all = pd.DataFrame()
+            fundos = df_all['Fundo'].unique()
+
+            for fundo in fundos:
+                df_fundos = df_all[df_all['Fundo'] == fundo][['Refdate', 'Fundo', 'Liquidez gerada dia']].copy()
+                df_fundos = df_fundos.groupby(['Refdate', 'Fundo']).sum().sort_values(by='Refdate').reset_index()
+                df_fundos['Liquidez total gerada'] = df_fundos['Liquidez gerada dia'].cumsum()
+                df_resumo_all = pd.concat([df_resumo_all, df_fundos])
+
+            return df_resumo_all
+
+        self.df_resumo_liquidez_fluxo_all = set_df_categoria_fluxo_all()
+        self.df_resumo_liquidez_all = set_df_resumo_all()
