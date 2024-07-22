@@ -76,7 +76,7 @@ def LogoStrix():
         col1, col2, col3 = st.columns([1, 2, 0.1])
         col2.image(
             os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
-            width=500,
+            width=350,
         )
 
 
@@ -123,21 +123,21 @@ if st.session_state.risco_liquidez_ativos:
 
             fundos = df_resumo_observaveis_formated["Fundo"].unique()
 
-            if len(fundos) > 1:
-
+            if len(fundos) == 1:
+                colunas = st.columns(2)
+            else:
                 colunas = st.columns(len(fundos))
+
+            for fundo in fundos:
 
                 for idx, fundo in enumerate(fundos):
                     df_fundo = df_resumo_observaveis_formated[
                         df_resumo_observaveis_formated["Fundo"] == fundo
-                    ]
+                    ][['Refdate', 'Posição dia', 'Premissa venda', 'Saldo posição dia', 'Liquidez gerada dia', 'Liquidez total gerada']]
 
                     with colunas[idx]:
-                        st.dataframe(df_fundo, hide_index=True, height=900)
-            else:
-                st.dataframe(
-                    df_resumo_observaveis_formated, hide_index=True, height=900
-                )
+                        st.subheader(fundo)
+                        st.dataframe(df_fundo, hide_index=True, height=900, use_container_width=True)
 
         def exibir_observaveis_por_ativo(df):
 
@@ -158,58 +158,31 @@ if st.session_state.risco_liquidez_ativos:
             )
 
             fundos = df_ativos_observaveis_formated["Fundo"].unique()
-            ativos = df_ativos_observaveis_formated["Ativo"].unique()
 
-            if len(fundos) > 1:
-
+            if len(fundos) == 1:
+                colunas = st.columns(2)
+            else:
                 colunas = st.columns(len(fundos))
 
-                for idx, fundo in enumerate(fundos):
-                    df_fundo = df_ativos_observaveis_formated[
-                        df_ativos_observaveis_formated["Fundo"] == fundo
-                    ]
+            for idx, fundo in enumerate(fundos):
+                df_fundo = df_ativos_observaveis_formated[
+                    df_ativos_observaveis_formated["Fundo"] == fundo
+                ][['Refdate', 'Ativo', 'Posição dia', 'Premissa venda', 'Saldo posição dia', 'Liquidez gerada dia', 'Liquidez total gerada']]
 
-                    with colunas[idx]:
-
-                        for ativo in ativos:
-                            df_ativo = df_fundo[
-                                (df_fundo["Ativo"] == ativo)
-                                & (df_fundo["Posição dia"] != "0")
-                                & (df_fundo["Liquidez gerada dia"] != "0")
-                            ].reset_index(drop=True)
-                            st.dataframe(df_ativo, hide_index=True)
-
-            else:
-
-                for ativo in ativos:
-                    df_ativo = df_ativos_observaveis_formated[
-                        (df_ativos_observaveis_formated["Ativo"] == ativo)
-                        & (df_ativos_observaveis_formated["Posição dia"] != "0")
-                        & (df_ativos_observaveis_formated["Liquidez gerada dia"] != "0")
-                    ].reset_index(drop=True)
-                    st.dataframe(df_ativo, hide_index=True)
+                with colunas[idx]:
+                    st.subheader(fundo)
+                    ativos = df_fundo["Ativo"].unique()
+                    for ativo in ativos:
+                        df_ativo = df_fundo[
+                            (df_fundo["Ativo"] == ativo)
+                            & (df_fundo["Posição dia"] != "0")
+                            & (df_fundo["Liquidez gerada dia"] != "0")
+                        ].reset_index(drop=True)
+                        st.dataframe(df_ativo, hide_index=True, use_container_width=True)
 
         def exibir_resumno_titulos_publicos(df):
 
             df_resumo_titulos_publicos = df.copy()
-            df_resumo_titulos_publicos = (
-                df_resumo_titulos_publicos[
-                    [
-                        "Refdate",
-                        "Fundo",
-                        "Categoria",
-                        "Posição dia",
-                        "Premissa venda",
-                        "Saldo posição dia",
-                        "Liquidez gerada dia",
-                        "Liquidez total gerada",
-                    ]
-                ]
-                .groupby(["Refdate", "Fundo", "Categoria"])
-                .sum()
-                .sort_values(by=["Fundo", "Refdate"])
-                .reset_index()
-            )
 
             df_resumo_titulos_publicos_formated = (
                 st.session_state.funcoes_pytools.format_df_float_columns_to_str(
@@ -227,19 +200,21 @@ if st.session_state.risco_liquidez_ativos:
 
             fundos = df_resumo_titulos_publicos_formated["Fundo"].unique()
 
-            if len(fundos) > 1:
-
+            if len(fundos) == 1:
+                colunas = st.columns(2)
+            else:
                 colunas = st.columns(len(fundos))
 
+            for fundo in fundos:
+                
                 for idx, fundo in enumerate(fundos):
                     df_fundo = df_resumo_titulos_publicos_formated[
                         df_resumo_titulos_publicos_formated["Fundo"] == fundo
-                    ]
+                    ][['Refdate', 'Posição dia', 'Premissa venda', 'Saldo posição dia', 'Liquidez gerada dia', 'Liquidez total gerada']]
 
                     with colunas[idx]:
-                        st.dataframe(df_fundo, hide_index=True)
-            else:
-                st.dataframe(df_resumo_titulos_publicos_formated, hide_index=True)
+                        st.subheader(fundo)
+                        st.dataframe(df_fundo, hide_index=True, use_container_width=True)
 
         def exibir_titulos_publicos_por_ativo(df):
 
@@ -264,32 +239,25 @@ if st.session_state.risco_liquidez_ativos:
             )
 
             fundos = df_ativos_titulo_publicos_formated["Fundo"].unique()
-            ativos = df_ativos_titulo_publicos_formated["Ativo"].unique()
 
-            if len(fundos) > 1:
-
+            if len(fundos) == 1:
+                colunas = st.columns(2)
+            else:
                 colunas = st.columns(len(fundos))
 
-                for idx, fundo in enumerate(fundos):
-                    df_fundo = df_ativos_titulo_publicos_formated[
-                        df_ativos_titulo_publicos_formated["Fundo"] == fundo
-                    ]
+            for idx, fundo in enumerate(fundos):
+                df_fundo = df_ativos_titulo_publicos_formated[
+                    df_ativos_titulo_publicos_formated["Fundo"] == fundo
+                ][['Refdate', 'Ativo', 'Posição dia', 'Premissa venda', 'Saldo posição dia', 'Liquidez gerada dia', 'Liquidez total gerada']]
 
-                    with colunas[idx]:
-
-                        for ativo in ativos:
-                            df_ativo = df_fundo[
-                                (df_fundo["Ativo"] == ativo)
-                            ].reset_index(drop=True)
-                            st.dataframe(df_ativo, hide_index=True)
-
-            else:
-
-                for ativo in ativos:
-                    df_ativo = df_ativos_titulo_publicos_formated[
-                        (df_ativos_titulo_publicos_formated["Ativo"] == ativo)
-                    ].reset_index(drop=True)
-                    st.dataframe(df_ativo, hide_index=True)
+                with colunas[idx]:
+                    st.subheader(fundo)
+                    ativos = df_fundo["Ativo"].unique()
+                    for ativo in ativos:
+                        df_ativo = df_fundo[
+                            (df_fundo["Ativo"] == ativo)
+                        ].reset_index(drop=True)
+                        st.dataframe(df_ativo, hide_index=True, use_container_width=True)
 
         def exibir_resumo_fluxos(df_fluxo, df_fluxo_fidcs, df_fluxo_fundos):
             # Concatenar os fundos únicos de todos os DataFrames
@@ -299,7 +267,7 @@ if st.session_state.risco_liquidez_ativos:
 
             for fundo in fundos:
                 with st.container(border=True):
-                    st.text(f"Fundo: {fundo}")
+                    st.subheader(fundo)
 
                     # Inicializar as colunas
                     col1, col2, col3 = st.columns(3)
@@ -309,16 +277,16 @@ if st.session_state.risco_liquidez_ativos:
 
                     # Adicionar DataFrames não vazios à lista
                     if not df_fluxo[df_fluxo["Fundo"] == fundo].empty:
-                        dataframes.append(df_fluxo[df_fluxo["Fundo"] == fundo])
+                        dataframes.append(df_fluxo[df_fluxo["Fundo"] == fundo][['Refdate', 'Categoria', 'Liquidez gerada dia', 'Liquidez total gerada']])
 
                     if not df_fluxo_fidcs[df_fluxo_fidcs["Fundo"] == fundo].empty:
                         dataframes.append(
-                            df_fluxo_fidcs[df_fluxo_fidcs["Fundo"] == fundo]
+                            df_fluxo_fidcs[df_fluxo_fidcs["Fundo"] == fundo][['Refdate', 'Categoria', 'Liquidez gerada dia', 'Liquidez total gerada']]
                         )
 
                     if not df_fluxo_fundos[df_fluxo_fundos["Fundo"] == fundo].empty:
                         dataframes.append(
-                            df_fluxo_fundos[df_fluxo_fundos["Fundo"] == fundo]
+                            df_fluxo_fundos[df_fluxo_fundos["Fundo"] == fundo][['Refdate', 'Categoria', 'Liquidez gerada dia', 'Liquidez total gerada']]
                         )
 
                     # Adicionar os DataFrames às colunas disponíveis
@@ -353,25 +321,25 @@ if st.session_state.risco_liquidez_ativos:
 
             for fundo in fundos_ordenados:
                 with st.container(border=True):
-                    st.text(f"Fundo: {fundo}")
+                    st.subheader(fundo)
 
                     dataframes = []
 
                     if not df_fluxo[df_fluxo["Fundo"] == fundo].empty:
-                        dataframes.append(df_fluxo[df_fluxo["Fundo"] == fundo])
+                        dataframes.append(df_fluxo[df_fluxo["Fundo"] == fundo][['Refdate', 'Categoria', 'Ativo', 'Liquidez gerada dia', 'Liquidez total gerada']])
 
                     if not df_fluxo_fidcs[df_fluxo_fidcs["Fundo"] == fundo].empty:
                         dataframes.append(
-                            df_fluxo_fidcs[df_fluxo_fidcs["Fundo"] == fundo]
+                            df_fluxo_fidcs[df_fluxo_fidcs["Fundo"] == fundo][['Refdate', 'Categoria', 'Ativo', 'Liquidez gerada dia', 'Liquidez total gerada']]
                         )
 
                     if not df_fluxo_fundos[df_fluxo_fundos["Fundo"] == fundo].empty:
                         dataframes.append(
-                            df_fluxo_fundos[df_fluxo_fundos["Fundo"] == fundo]
+                            df_fluxo_fundos[df_fluxo_fundos["Fundo"] == fundo][['Refdate', 'Categoria', 'Ativo', 'Liquidez gerada dia', 'Liquidez total gerada']]
                         )
 
                     # Cria colunas dinamicamente com base no número de DataFrames não vazios
-                    colunas = st.columns(len(dataframes))
+                    colunas = st.columns(3)
 
                     # Itera sobre os DataFrames e ativos dentro de cada DataFrame
                     for idx, df in enumerate(dataframes):
@@ -383,77 +351,104 @@ if st.session_state.risco_liquidez_ativos:
                                     df_ativo, hide_index=True, use_container_width=True
                                 )
 
-        def call_bases():
+        def exibir_resumo_fundos_all(df_observaveis, df_titulos_publicos, df_fluxos_all, df_resumo_all):
 
-            df_base_observaveis = (
-                st.session_state.manager_liquidez.df_base_liquidez_diaria_observavel.copy()
-            )
+            fundos = df_resumo_all['Fundo'].unique()
 
-            df_resumo_observaveis = (
-                st.session_state.manager_liquidez.df_resumo_observavel.copy()
-            )
+            for fundo in fundos:
+                with st.container(border=True):
 
-            df_base_titulos_publicos = (
-                st.session_state.manager_liquidez.df_base_liquidez_diaria_tit_publicos.copy()
-            )
+                    st.subheader(f"Fundo: {fundo}")
 
-            df_base_fluxo_ativos = (
-                st.session_state.manager_liquidez.df_base_liquidez_diaria_fluxo.copy()
-            )
+                    # Inicializar as colunas
+                    col1, col2, col3, col4 = st.columns(4)
 
-            df_base_fluxo_resumo = (
-                st.session_state.manager_liquidez.df_resumo_liquidez_fluxo.copy()
-            )
+                    # Inicializar uma lista de DataFrames
+                    dataframes = []
 
-            df_base_fluxo_fidcs_ativos = (
-                st.session_state.manager_liquidez.df_base_liquidez_diaria_fluxo_fidcs.copy()
-            )
+                    count = 0
+                    dict_count = {}
 
-            df_base_fluxo_fidcs_resumo = (
-                st.session_state.manager_liquidez.df_resumo_liquidez_fidcs.copy()
-            )
+                    # Adicionar DataFrames não vazios à lista
+                    if not df_observaveis[df_observaveis["Fundo"] == fundo].empty:
+                        dataframes.append(df_observaveis[df_observaveis["Fundo"] == fundo][[
+                            'Refdate', 'Liquidez gerada dia', 'Liquidez total gerada']])
+                        dict_count[count] = "Mercado Observável"
+                        count += 1
 
-            df_base_fluxo_fundos_ativos = (
-                st.session_state.manager_liquidez.df_base_liquidez_diaria_fluxo_fundos.copy()
-            )
+                    if not df_fluxos_all[df_fluxos_all["Fundo"] == fundo].empty:
+                        dataframes.append(df_fluxos_all[df_fluxos_all["Fundo"] == fundo][[
+                            'Refdate', 'Liquidez gerada dia', 'Liquidez total gerada']])
+                        dict_count[count] = "Fluxo"
+                        count += 1
 
-            df_base_fluxo_fundos_resumo = (
-                st.session_state.manager_liquidez.df_resumo_liquidez_fundos.copy()
-            )
+                    if not df_titulos_publicos[df_titulos_publicos["Fundo"] == fundo].empty:
+                        dataframes.append(df_titulos_publicos[df_titulos_publicos["Fundo"] == fundo][[
+                            'Refdate', 'Liquidez gerada dia', 'Liquidez total gerada']])
+                        dict_count[count] = "Tit. Públicos"
+                        count += 1
 
-            return (
-                df_base_observaveis,
-                df_resumo_observaveis,
-                df_base_titulos_publicos,
-                df_base_fluxo_ativos,
-                df_base_fluxo_resumo,
-                df_base_fluxo_fidcs_ativos,
-                df_base_fluxo_fidcs_resumo,
-                df_base_fluxo_fundos_ativos,
-                df_base_fluxo_fundos_resumo,
-            )
+                    if not df_resumo_all[df_resumo_all["Fundo"] == fundo].empty:
+                        dataframes.append(df_resumo_all[df_resumo_all["Fundo"] == fundo][[
+                            'Refdate', 'Liquidez gerada dia', 'Liquidez total gerada']])
+                        dict_count[count] = "Total"
+                        count += 1
+
+                    # Adicionar os DataFrames às colunas disponíveis
+                    for idx, df in enumerate(dataframes):
+                        if idx == 0:
+                            col1.write(f"***{dict_count[idx]}***")
+                            col1.dataframe(
+                                df, hide_index=True, use_container_width=True
+                            )
+                        elif idx == 1:
+                            col2.write(f"***{dict_count[idx]}***")
+                            col2.dataframe(
+                                df, hide_index=True, use_container_width=True
+                            )
+                        elif idx == 2:
+                            col3.write(f"***{dict_count[idx]}***")
+                            col3.dataframe(
+                                df, hide_index=True, use_container_width=True
+                            )
+
+                        elif idx == 3:
+                            col4.write(f"***{dict_count[idx]}***")
+                            col4.dataframe(
+                                df, hide_index=True, use_container_width=True
+                            )
+
+        # Captura das Bases -----------------------------------------------------------------------
 
         st.session_state.manager_liquidez.set_refdate(refdate)
 
-        (
-            df_base_observaveis,
-            df_resumo_observaveis,
-            df_base_titulos_publicos,
-            df_base_fluxo_ativos,
-            df_base_fluxo_resumo,
-            df_base_fluxo_fidcs_ativos,
-            df_base_fluxo_fidcs_resumo,
-            df_base_fluxo_fundos_ativos,
-            df_base_fluxo_fundos_resumo,
-        ) = call_bases()
+        df_base_observaveis = st.session_state.manager_liquidez.df_base_liquidez_diaria_observavel
+        df_resumo_observaveis = st.session_state.manager_liquidez.df_resumo_liquidez_observavel
+        df_base_titulos_publicos = st.session_state.manager_liquidez.df_base_liquidez_diaria_tit_publicos
+        df_base_titulos_publicos_resumo = st.session_state.manager_liquidez.df_resumo_liquidez_tit_publicos
+        df_base_fluxo_ativos = st.session_state.manager_liquidez.df_base_liquidez_diaria_fluxo
+        df_base_fluxo_resumo = st.session_state.manager_liquidez.df_resumo_liquidez_fluxo
+        df_base_fluxo_fidcs_ativos = st.session_state.manager_liquidez.df_base_liquidez_diaria_fluxo_fidcs
+        df_base_fluxo_fidcs_resumo = st.session_state.manager_liquidez.df_resumo_liquidez_fidcs
+        df_base_fluxo_fundos_ativos = st.session_state.manager_liquidez.df_base_liquidez_diaria_fluxo_fundos
+        df_base_fluxo_fundos_resumo = st.session_state.manager_liquidez.df_resumo_liquidez_fundos
 
-        # # -----------------------------------------------------------------------
+        df_base_fluxo_all_resumo = st.session_state.manager_liquidez.df_resumo_liquidez_fluxo_all
+        df_base_all_resumo = st.session_state.manager_liquidez.df_resumo_liquidez_all
 
+        # -----------------------------------------------------------------------
         st.header(f"Risco de Liquidez - {refdate.strftime('%d/%m/%Y')}")
 
         # Exibição das tabelas
 
         st.subheader("Resumo")
+
+        exibir_resumo_fundos_all(
+            df_resumo_observaveis[['Refdate', 'Fundo', 'Liquidez gerada dia', 'Liquidez total gerada']],
+            df_base_titulos_publicos_resumo[['Refdate', 'Fundo', 'Liquidez gerada dia', 'Liquidez total gerada']],
+            df_base_fluxo_all_resumo,
+            df_base_all_resumo
+            )
 
         with st.expander("Mercado Observável - Resumo"):
 
@@ -461,7 +456,7 @@ if st.session_state.risco_liquidez_ativos:
 
         with st.expander("Títulos Publicos - Resumo"):
 
-            exibir_resumno_titulos_publicos(df_base_titulos_publicos)
+            exibir_resumno_titulos_publicos(df_base_titulos_publicos_resumo)
 
         with st.expander("Fluxo - Resumo"):
 
