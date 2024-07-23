@@ -1,4 +1,19 @@
-from __init__ import *
+import os
+from datetime import date, datetime
+from xml.etree import ElementTree as ET
+
+import numpy as np
+import pandas as pd
+from __init__ import append_paths
+
+append_paths()
+
+from tools.db_helper import SQL_Manager
+from tools.my_logger import Logger
+from tools.py_tools import FuncoesPyTools
+
+# -------------------------------------------------------------------------------------------------------
+# Constants:
 
 VERSION_APP = "1.1.1"
 VERSION_REFDATE = "2024-07-10"
@@ -8,19 +23,9 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
-#-----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------
+# Define the class:
 
-from datetime import date, datetime
-from xml.etree import ElementTree as ET
-
-import numpy as np
-import pandas as pd
-
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools
-
-#-----------------------------------------------------------------------
 
 class UploadArquivosXML:
 

@@ -42,7 +42,8 @@ class SQL_Manager:
     def check_connection(self):
         try:
             self.conn.execute(text("SELECT 1"))
-        except:
+        except Exception as e:
+            e
             self.conn = self.engine.connect()
             self.conn.execution_options(isolation_level="AUTOCOMMIT")
 

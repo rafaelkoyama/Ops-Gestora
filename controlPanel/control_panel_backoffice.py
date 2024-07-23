@@ -929,14 +929,20 @@ class ProcessManager:
                 else:
                     self.driver = None
 
-                if self.app.opt_check_btn_curvas_b3.get():
-                    self.upload_curvasB3()
 
-                if self.app.opt_check_btn_cdi_selic_b3.get():
-                    self.captura_cdi_selic_b3()
+                if self.driver is not None:
 
-                if check_need_driver:
-                    self.driver.quit()
+                    if self.app.opt_check_btn_curvas_b3.get():
+                        self.upload_curvasB3()
+
+                    if self.app.opt_check_btn_cdi_selic_b3.get():
+                        self.captura_cdi_selic_b3()
+
+                    if check_need_driver:
+                        self.driver.quit()
+
+                else:
+                    self.window_status_outras_bases.text_box.insert("end", f"Driver web falhou.\n")
 
             self.window_status_outras_bases.text_box.insert("end", f"Processos finalizados.\n")
             self.window_status_outras_bases.status_running = False
