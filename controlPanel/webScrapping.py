@@ -44,9 +44,12 @@ class openEdgeDriver():
         self.open_edge()
 
     def open_edge(self):
-
-        self.service = Service(EdgeChromiumDriverManager().install())
-        self.driver = webdriver.Edge(service=self.service, options=edge_options)
+        try:
+            self.service = Service(EdgeChromiumDriverManager().install())
+            self.driver = webdriver.Edge(service=self.service, options=edge_options)
+        except Exception as e:
+            print(f"Erro ao abrir o navegador: {e}")
+            return None
 
 class debenturesAnbima():
     def __init__(self, manager_sql=None, funcoes_pytools=None, logger=None):

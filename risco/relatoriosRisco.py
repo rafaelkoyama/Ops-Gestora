@@ -1,16 +1,21 @@
-# Import bibliotecas:
 import os
 from datetime import date
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from __init__ import *
+from __init__ import append_paths
 from matplotlib.ticker import FuncFormatter
 from scipy.stats import norm
 
+append_paths()
+
 from tools.biblioteca_processos import capturaDados
 from tools.db_helper import SQL_Manager
+from tools.dictionaries_lists_library import (
+    FixedDictionariesListsLibrary,
+    SqlDictionariesLists,
+)
 from tools.py_tools import FuncoesPyTools
 
 VERSION_APP = "2.0.2"
@@ -20,10 +25,6 @@ SCRIPT_NAME = os.path.basename(__file__)
 
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-# append_paths()
-
-# -----------------------------------------------------------------------
 
 # -----------------------------------------------------------------------
 
@@ -194,8 +195,7 @@ class enquadramentoCarteira:
         df_exposicao_com_limites.reset_index(drop=True, inplace=True)
 
         lista_modalidades_com_limite_sem_posicao = list(
-            set(self.lista_modalidade_ativos_com_limite)
-            - set(df_exposicao_com_limites["MODALIDADE_ENQUADRAMENTO"])
+            set(self.lista_modalidade_ativos_com_limite) - set(df_exposicao_com_limites["MODALIDADE_ENQUADRAMENTO"])
         )
 
         if len(lista_modalidades_com_limite_sem_posicao) > 0:
@@ -417,8 +417,7 @@ class enquadramentoCarteira:
         df_carteira["EMISSOR"] = df_carteira["ATIVO"].map(self.dict_cad_ativo)
         df_carteira = df_carteira[~df_carteira["EMISSOR"].isnull()]
         df_carteira = df_carteira[
-            (df_carteira["TIPO_ATIVO"] != "Compromissada")
-            & (df_carteira["TIPO_ATIVO"] != "Tit. Publicos")
+            (df_carteira["TIPO_ATIVO"] != "Compromissada") & (df_carteira["TIPO_ATIVO"] != "Tit. Publicos")
         ]
         df_carteira["Exposição"] = df_carteira["FINANCEIRO_D0"] / self.pl_yield_master
 
@@ -874,26 +873,26 @@ class liquidezAtivos:
 
     def __init__(self, manager_sql=None, funcoes_pytools=None):
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is not None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
 
         self.manager_dados = capturaDados(
             manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools
         )
 
-        self.lista_tipo_ativos_observaveis = ["Debênture"]
-        self.lista_tipo_ativos_titulos_publicos = ["Tit. Publicos", "Compromissada"]
-        self.lista_tipo_ativos_fluxo = ["CCB", "CDB", "LF", "LFSC", "LFSN-PRE"]
-        self.lista_tipo_ativos_fundos = ["Fundos BR", "Fundos Caixa"]
+        self.sql_aux_dict_lists = SqlDictionariesLists(manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools)
 
-        self.refdate = None
+        self.fixed_aux_dict_lists = FixedDictionariesListsLibrary()
+
+        self.lista_tipo_ativos_observaveis = self.fixed_aux_dict_lists.lista_tipo_ativos_observaveis
+        self.lista_tipo_ativos_titulos_publicos = self.fixed_aux_dict_lists.lista_tipo_ativos_titulos_publicos
+        self.lista_tipo_ativos_fluxo = self.fixed_aux_dict_lists.lista_tipo_ativos_fluxo
+        self.lista_tipo_ativos_fundos = self.fixed_aux_dict_lists.lista_tipo_ativos_fundos
+
+        self.dict_fundos_fic_master = self.fixed_aux_dict_lists.dict_fundos_fic_master
+
+        # self.refdate = None
         self.df_carteira_fundos = None
         self.df_base_b3_observaveis = None
         self.lista_ativos_observaveis_sem_liquidez = None
@@ -984,6 +983,8 @@ class liquidezAtivos:
 
         self.set_df_resumo_liquidez_all()
 
+        self.set_df_liquidez_fundos_x_passivo()
+
     def isRefdateSet(self):
 
         if self.refdate is None:
@@ -1020,8 +1021,7 @@ class liquidezAtivos:
                     self.df_carteira_fundos["TIPO_ATIVO"].isin(
                         self.lista_tipo_ativos_observaveis
                     )
-                )
-                & (
+                ) & (
                     ~self.df_carteira_fundos["ATIVO"].isin(
                         self.lista_ativos_observaveis_sem_liquidez
                     )
@@ -1392,8 +1392,7 @@ class liquidezAtivos:
             df_liquidez_fluxo = set_df_base_to_work().copy()
 
             df_liquidez_fluxo.loc[:, "Liquidez gerada dia"] = (
-                df_liquidez_fluxo["FLUXO_DESCONTADO"]
-                * df_liquidez_fluxo["QUANTIDADE_D0"]
+                df_liquidez_fluxo["FLUXO_DESCONTADO"] * df_liquidez_fluxo["QUANTIDADE_D0"]
             )
 
             df_liquidez_fluxo.loc[:, "Categoria"] = "Fluxo"
@@ -1536,8 +1535,7 @@ class liquidezAtivos:
         def data_liquidacao_resgate(row):
 
             if (
-                row["DIAS_COTIZACAO_RESGATE"] == 0
-                and row["DIAS_LIQUIDACAO_RESGATE"] == 0
+                row["DIAS_COTIZACAO_RESGATE"] == 0 and row["DIAS_LIQUIDACAO_RESGATE"] == 0
             ):
                 return row["REFDATE"]
 
@@ -1646,7 +1644,7 @@ class liquidezAtivos:
             df_resumo_fluxo = self.df_resumo_liquidez_fluxo
             df_resumo_fluxo_fidcs = self.df_resumo_liquidez_fidcs
             df_resumo_fluxo_fundos = self.df_resumo_liquidez_fundos
-        
+
             df_fluxo_all = pd.concat(
                 [df_resumo_fluxo, df_resumo_fluxo_fidcs, df_resumo_fluxo_fundos],
                 axis=0).sort_values(by=['Fundo', 'Refdate']).reset_index(drop=True)
@@ -1683,3 +1681,70 @@ class liquidezAtivos:
 
         self.df_resumo_liquidez_fluxo_all = set_df_categoria_fluxo_all()
         self.df_resumo_liquidez_all = set_df_resumo_all()
+
+    def set_df_liquidez_fundos_x_passivo(self):
+
+        def get_df_resgates():
+
+            df_resgates = self.manager_sql.select_dataframe(
+                "SELECT DATA_IMPACTO AS DATA_LIQUIDACAO, FUNDO, DESC_TIPO_OPERACAO, VALOR * -1 AS VALOR, QTD_COTAS * -1 AS QTD_COTAS "
+                f"FROM TB_BASE_BTG_MOVIMENTACAO_PASSIVO "
+                f"WHERE DATA_OPERACAO <= '{self.refdate}' AND DATA_IMPACTO >= '{self.refdate}' AND TIPO_OPERACAO = 'RESGATE' "
+                f"AND FUNDO NOT IN ('STRIX YIELD MASTER F')")
+
+            if 'RESGATE TOTAL' in df_resgates['DESC_TIPO_OPERACAO'].unique().tolist():
+                df_resgates['Cota'] = df_resgates['FUNDO'].map(self.sql_aux_dict_lists.get_dict_last_cotas(self.refdate))
+                df_resgates.loc[:, 'VALOR'] = df_resgates.apply(
+                    lambda x: x['Cota'] * x['QTD_COTAS'] if x['DESC_TIPO_OPERACAO'] == 'RESGATE TOTAL' else x['VALOR'], axis=1)
+
+            df_resgates = df_resgates[['DATA_LIQUIDACAO', 'FUNDO', 'VALOR']]
+
+            df_resgates['FUNDO_MASTER'] = df_resgates['FUNDO'].map(self.fixed_aux_dict_lists.dict_fundos_fic_master)
+
+            df_resgates = df_resgates[['FUNDO_MASTER', 'DATA_LIQUIDACAO', 'VALOR']].groupby([
+                'FUNDO_MASTER', 'DATA_LIQUIDACAO']).sum().sort_values(by=['FUNDO_MASTER', 'DATA_LIQUIDACAO']).reset_index()
+
+            df_resgates = df_resgates.rename(columns={
+                'FUNDO_MASTER': 'Fundo', 'DATA_LIQUIDACAO': 'Refdate', 'VALOR': 'Resgates a Liquidar'})
+
+            return df_resgates
+
+        def set_df_liquidez_x_passivo():
+
+            df_resgates = get_df_resgates()
+
+            df_fundos = self.df_resumo_liquidez_all[['Refdate', 'Fundo', 'Liquidez gerada dia']].copy()
+
+            fundos = pd.concat([df_fundos[['Refdate', 'Fundo']], df_resgates[['Refdate', 'Fundo']]]).drop_duplicates()
+
+            df_resumo_fundos = pd.DataFrame()
+
+            for fundo in fundos['Fundo'].unique():
+                df_fundo = fundos[fundos['Fundo'] == fundo].copy()
+                df_fundo = pd.merge(df_fundo, df_fundos, on=['Refdate', 'Fundo'], how='left').merge(
+                    df_resgates, on=['Refdate', 'Fundo'], how='left')
+                df_resumo_fundos = pd.concat([df_resumo_fundos, df_fundo])
+
+            df_resumo_fundos['Resgates a Liquidar'] = df_resumo_fundos['Resgates a Liquidar'].fillna(0)
+
+            df_resumo_fundos['Saldo gerado dia'] = df_resumo_fundos.apply(
+                lambda x: x['Liquidez gerada dia'] + x['Resgates a Liquidar'], axis=1)
+
+            return df_resumo_fundos
+
+        def set_saldo_liquidez_total_gerada():
+
+            df_resumo = set_df_liquidez_x_passivo()
+            df_resumo_fundos = pd.DataFrame()
+
+            fundos = df_resumo['Fundo'].unique()
+
+            for fundo in fundos:
+                df_fundo = df_resumo[df_resumo['Fundo'] == fundo].copy()
+                df_fundo.sort_values(by='Refdate', inplace=True)
+                df_fundo['Saldo total gerado'] = df_fundo['Saldo gerado dia'].cumsum()
+                df_resumo_fundos = pd.concat([df_resumo_fundos, df_fundo])
+
+            return df_resumo_fundos
+
+        self.df_liquidez_fundos_x_passivo = set_saldo_liquidez_total_gerada()

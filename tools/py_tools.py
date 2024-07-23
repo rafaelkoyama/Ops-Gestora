@@ -25,6 +25,7 @@ from tools.my_logger import Logger
 
 # -----------------------------------------------------------------------
 
+
 class FuncoesPyTools:
 
     def __init__(self, manager_sql=None, logger=None):
@@ -442,6 +443,7 @@ class ProcessManagerOutlook:
                 self.logger.reset_index()
                 return False
 
+
 class OutlookHandler:
 
     def __init__(self, manager_sql=None, funcoes_pytools=None, logger=None):
@@ -522,6 +524,7 @@ class OutlookHandler:
             str_endswith=str_endswith,
             str_to_save_attchament=str_to_save_attchament,
         )
+
 
 class Graficos:
 
