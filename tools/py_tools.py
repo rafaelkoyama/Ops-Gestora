@@ -1,15 +1,3 @@
-from __init__ import *
-
-VERSION_APP = "1.1.4"
-VERSION_REFDATE = "2024-07-08"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-# -----------------------------------------------------------------------
-
 from datetime import date, datetime, timedelta
 from math import trunc
 
@@ -17,19 +5,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import win32com.client as win32
+from __init__ import *  # noqa: F403
 from dateutil.relativedelta import relativedelta
 from matplotlib.ticker import FuncFormatter
 
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
+append_paths()  # noqa: F405
 
-# -----------------------------------------------------------------------
+from tools.db_helper import SQL_Manager  # noqa: E402
+from tools.my_logger import Logger  # noqa: E402
+
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "1.1.4"
+VERSION_REFDATE = "2024-07-08"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F405
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F405
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
+# Classes:
 
 
 class FuncoesPyTools:
 
     def __init__(self, manager_sql=None, logger=None):
-        if manager_sql == None:
+        if manager_sql is None:
             self.manager_sql = SQL_Manager()
         else:
             self.manager_sql = manager_sql
@@ -144,10 +146,7 @@ class FuncoesPyTools:
         count_days = 0
 
         while data_ref <= data_fim:
-            if (
-                data_ref.weekday() in self.dias_semana
-                and data_ref not in self.feriados_br
-            ):
+            if (data_ref.weekday() in self.dias_semana and data_ref not in self.feriados_br):
                 count_days += 1
             data_ref = data_ref + timedelta(days=1)
 
@@ -166,10 +165,7 @@ class FuncoesPyTools:
             else:
                 data_ref = data_ref - timedelta(days=1)
 
-            if (
-                data_ref.weekday() in self.dias_semana
-                and data_ref not in self.feriados_br
-            ):
+            if (data_ref.weekday() in self.dias_semana and data_ref not in self.feriados_br):
                 count_days += 1
 
         return data_ref
@@ -207,8 +203,6 @@ class FuncoesPyTools:
 
         return data_ref
 
-
-
     def dias_corridos(self, data_inicio, data_fim):
         dif = data_fim - data_inicio
         return int(dif.days)
@@ -220,7 +214,7 @@ class FuncoesPyTools:
         return datetime.strftime(data, "%Y-%m-%d")
 
     def formatar_data_hora(self, data_hora_str):
-        if data_hora_str != None:
+        if data_hora_str is not None:
             data_hora_obj = datetime.strptime(
                 data_hora_str, "%Y-%m-%dT%H:%M:%S")
             return data_hora_obj.strftime("%Y-%m-%d %H:%M:%S")
@@ -251,7 +245,7 @@ class FuncoesPyTools:
             return rent_indexador
 
     def checkFileExists(self, path):
-        return os.path.exists(path)
+        return os.path.exists(path)  # noqa: F405
 
     def find_header_row(self, file_path, header_name):
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -341,10 +335,10 @@ class ProcessManagerOutlook:
 
             mail.Importance = importance
 
-            if sendBehalf != None:
+            if sendBehalf is not None:
                 mail.SentOnBehalfOfName = sendBehalf
 
-            if attachment_list != None:
+            if attachment_list is not None:
                 for attachment in attachment_list:
                     mail.Attachments.Add(attachment)
 
@@ -388,7 +382,7 @@ class ProcessManagerOutlook:
 
         if self.funcoes_pytools.checkFileExists(str_to_save_attchament):
             self.logger.info(
-                log_message=f"ProcessManagerOutlook - save_attachments_from_folder - Arquivo já existe",
+                log_message="ProcessManagerOutlook - save_attachments_from_folder - Arquivo já existe",
                 script_original=SCRIPT_NAME
             )
             return "Arquivo já existe"
@@ -405,7 +399,7 @@ class ProcessManagerOutlook:
 
         folder = self.find_folder_by_name(target_name=name_folder)
 
-        if folder != False:
+        if folder is not False:
             self.logger.info(
                 log_message=f"ProcessManagerOutlook - find_folder_by_name - Pasta encontada",
                 script_original=SCRIPT_NAME)
@@ -415,10 +409,7 @@ class ProcessManagerOutlook:
                     try:
                         if email.ReceivedTime.date() >= refdate_email:
                             for attachment in email.Attachments:
-                                if (
-                                    str_to_find_attachment in attachment.FileName
-                                    and attachment.FileName.endswith(str_endswith)
-                                ):
+                                if (str_to_find_attachment in attachment.FileName and attachment.FileName.endswith(str_endswith)):
                                     attachment.SaveAsFile(str_to_save_attchament)
                                     self.logger.info(
                                         log_message=f"ProcessManagerOutlook - save_attachments_from_folder - Arquivo salvo",
@@ -471,7 +462,7 @@ class OutlookHandler:
 
         self.process_manager = ProcessManagerOutlook(app=self)
 
-    def senf_email_robo(self, to_list:list, subject:str, msg_body:str, importance=1, attachment_list:list=None):
+    def senf_email_robo(self, to_list: list, subject: str, msg_body: str, importance=1, attachment_list: list = None):
 
         msg_body_head = (
             f"Mensagem automática.\n\n"
@@ -482,7 +473,7 @@ class OutlookHandler:
             subject=subject,
             msg_body=msg_body_head + msg_body,
             attachment_list=attachment_list,
-            sendBehalf=os.getenv("EMAIL_ROBO"),
+            sendBehalf=os.getenv("EMAIL_ROBO"),  # noqa: F405
             importance=importance,
         )
 
@@ -504,10 +495,10 @@ class OutlookHandler:
             sendBehalf=sendBehalf,
             importance=importance,
         )
-    
+
     def find_folder_by_name(self, target_name, folder=None):
         return self.process_manager.find_folder_by_name(target_name, folder=folder)
-    
+
     def save_attachments_from_folder(
         self,
         name_folder,
@@ -533,7 +524,8 @@ class Graficos:
         s = f"{100 * y:.{decimals}f}%"
         return s
 
-    def graficoLinhas(self, df_dados:pd.DataFrame, titulo_grafico:str=None, label_dados:str=None, label_eixo_y:str=None, tamanho_fig=(12, 6), dados_percent=True, decimals=2):
+    def graficoLinhas(self, df_dados: pd.DataFrame, titulo_grafico: str = None, label_dados: str = None, label_eixo_y: str = None,
+                      tamanho_fig=(12, 6), dados_percent=True, decimals=2):
 
         df_dados = df_dados.values.tolist()
         refdates, dados = zip(*df_dados)
@@ -587,6 +579,3 @@ class Graficos:
             plt.legend()
 
         return plt
-
-
-

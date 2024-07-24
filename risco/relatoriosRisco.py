@@ -10,13 +10,13 @@ from scipy.stats import norm
 
 append_paths()
 
-from tools.biblioteca_processos import capturaDados
-from tools.db_helper import SQL_Manager
-from tools.dictionaries_lists_library import (
+from tools.biblioteca_processos import capturaDados  # noqa: E402
+from tools.db_helper import SQL_Manager  # noqa: E402
+from tools.dictionaries_lists_library import (  # noqa: E402
     FixedDictionariesListsLibrary,
     SqlDictionariesLists,
 )
-from tools.py_tools import FuncoesPyTools
+from tools.py_tools import FuncoesPyTools  # noqa: E402
 
 VERSION_APP = "2.0.2"
 VERSION_REFDATE = "2024-07-15"

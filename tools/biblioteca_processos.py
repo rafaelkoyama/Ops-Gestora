@@ -4,13 +4,13 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 import pandas as pd
-from __init__ import append_paths
+from __init__ import append_paths, str_user
 
 append_paths()
 
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools
+from tools.db_helper import SQL_Manager  # noqa: E402
+from tools.my_logger import Logger  # noqa: E402
+from tools.py_tools import FuncoesPyTools  # noqa: E402
 
 # -------------------------------------------------------------------------------------------------------
 # Constants:
@@ -825,7 +825,7 @@ class UploadArquivosXML:
 
         self.refdate = refdate
 
-        if lista_fundos != None:
+        if lista_fundos is not None:
             self.list_funds.clear()
             for fundo in lista_fundos:
                 self.list_funds.append(fundo)
@@ -847,7 +847,7 @@ class UploadArquivosXML:
                 self.run_processo()
             else:
                 # self.logger.error(f"Arq não encontrado: {self.file_name}")
-                self.list_temp.append(f"Arquivo xml não encontrado.")
+                self.list_temp.append("Arquivo xml não encontrado.")
 
             if len(self.list_temp) == 0:
                 result[self.fundo] = "ok"
@@ -978,7 +978,8 @@ class UpdateIndexadores:
     def captura_dados(self):
 
         cota_indexador_dm1 = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT COTA_INDEXADOR FROM TB_INDEXADORES WHERE REFDATE = '{self.dmenos.strftime('%Y-%m-%d')}' AND INDEXADOR = '{self.dict_indexador[self.dict_indexador[self.fundo]]}'"
+            f"SELECT DISTINCT COTA_INDEXADOR FROM TB_INDEXADORES WHERE REFDATE = '{self.dmenos.strftime('%Y-%m-%d')}' "
+            f"AND INDEXADOR = '{self.dict_indexador[self.dict_indexador[self.fundo]]}'"
         )
         try:
             cota_indexador_dm1 = float(cota_indexador_dm1.values[0][0])
@@ -986,7 +987,8 @@ class UpdateIndexadores:
             cota_indexador_dm1 = None
 
         rent_dia_indexador = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT VAR_INDEXADOR_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE REFDATE = '{self.refdate.strftime('%Y-%m-%d')}' AND INDEXADOR_FUNDO = '{self.dict_indexador[self.fundo]}' AND FUNDO = '{self.fundo}'"
+            f"SELECT DISTINCT VAR_INDEXADOR_DIA FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE REFDATE = '{self.refdate.strftime('%Y-%m-%d')}' "
+            f"AND INDEXADOR_FUNDO = '{self.dict_indexador[self.fundo]}' AND FUNDO = '{self.fundo}'"
         )
         try:
             rent_dia_indexador = float(rent_dia_indexador.values[0][0] / 100)
@@ -1027,15 +1029,13 @@ class UpdateIndexadores:
         for fundo in self.lista_fundos:
             self.fundo = fundo
             self.cota_indexador_dm1, self.rent_dia_indexador = self.captura_dados()
-            if (
-                self.cota_indexador_dm1 is not None
-                and self.rent_dia_indexador is not None
-            ):
+            if (self.cota_indexador_dm1 is not None and self.rent_dia_indexador is not None):
                 self.sobe_dados()
                 result[self.dict_indexador[self.fundo]] = "ok"
             else:
                 result[self.dict_indexador[self.fundo]] = (
-                    f"ERROR --> {('Indexador dm1' if self.cota_indexador_dm1 is None else '')}{(' | Rent Indexador Dia' if self.rent_dia_indexador is None else '')}"
+                    f"ERROR --> {('Indexador dm1' if self.cota_indexador_dm1 is None else '')}"
+                    f"{(' | Rent Indexador Dia' if self.rent_dia_indexador is None else '')}"
                 )
 
         return result
@@ -1119,7 +1119,7 @@ class RentabilidadeAtivos:
     def base_cota_pu(self):
         """Funcao captura base de cota para rentabilidade dos ativos."""
         self.df_cota_pu = self.manager_sql.select_dataframe(
-            f"SELECT REFDATE, ATIVO, COTA_PU FROM TB_RENTABILIDADE_ATIVOS"
+            "SELECT REFDATE, ATIVO, COTA_PU FROM TB_RENTABILIDADE_ATIVOS"
         )
 
     def base_fluxo_pagamentos(self):
@@ -1404,7 +1404,7 @@ class RentabilidadeAtivos:
         )
 
         df_btg_debentures = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT REFDATE, ATIVO, PU AS PU_BTG FROM TB_PRECOS WHERE TIPO_ATIVO = 'Debênture' AND FONTE = 'BTG'"
+            "SELECT DISTINCT REFDATE, ATIVO, PU AS PU_BTG FROM TB_PRECOS WHERE TIPO_ATIVO = 'Debênture' AND FONTE = 'BTG'"
         )
 
         df_precos_debentures = pd.merge(
@@ -1496,8 +1496,7 @@ class RentabilidadeAtivos:
         ]
 
         df_rent_debentures = df_rent_debentures[
-            (df_rent_debentures["PU_DM1"] != 0)
-            & (df_rent_debentures["PU_D0_AJUSTADO"].notna())
+            (df_rent_debentures["PU_DM1"] != 0) & (df_rent_debentures["PU_D0_AJUSTADO"].notna())
         ]
 
         self.df_rent_debentures = df_rent_debentures
@@ -1585,7 +1584,7 @@ class DadosBoletimB3:
 
         df = pd.read_csv(str_file, skiprows=skip_row, skipfooter=1, engine='python', sep=';', decimal=',')
 
-        df.rename(columns = {
+        df.rename(columns={
             'Instrumento Financeiro': 'TIPO_ATIVO',
             'Emissor': 'EMISSOR',
             'Código IF': 'COD_IF',
@@ -1600,7 +1599,7 @@ class DadosBoletimB3:
             'Código ISIN': 'ISIN',
             'Data Liquidação': 'DATA_LIQUIDACAO',
             'Situação Negócio': 'STATUS'
-            }, inplace=True)
+        }, inplace=True)
 
         df = df[[
             'REFDATE',
@@ -1617,8 +1616,8 @@ class DadosBoletimB3:
             'ISIN',
             'ORIGEM',
             'ID_B3'
-            ]]
-        
+        ]]
+
         df['HORARIO_NEGOCIADO'] = pd.to_datetime(df['HORARIO_NEGOCIADO'], format='%H:%M:%S').dt.time
         df['DATA_LIQUIDACAO'] = pd.to_datetime(df['DATA_LIQUIDACAO'], format='%d/%m/%Y').dt.date
         df['REFDATE'] = pd.to_datetime(df['REFDATE'], format='%d/%m/%Y').dt.date
@@ -1664,7 +1663,6 @@ class DadosCarteirasAtivos:
 
         self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
 
-
         self.dict_tipo_ativos_by_fundo = {}
         self.dict_carteiras_by_refdate_fundo = {}
         self.df_fluxo_futuro_ativos_by_refdate = pd.DataFrame()
@@ -1677,7 +1675,7 @@ class DadosCarteirasAtivos:
         self.refdate = None
 
     def set_refdate(self, refdate: date):
-    
+
         self.refdate = refdate
 
     def get_dict_list_tipo_ativos_by_fundos(self):
@@ -1751,19 +1749,18 @@ class capturaDados:
 
         Args:
             refdate (date): Data de referência dos trades ou Data final de referênca caso refdateInicio seja != None.
-            refdateInicio (date, opcional): Data de início do intervalo de referência dos trades. 
+            refdateInicio (date, opcional): Data de início do intervalo de referência dos trades.
                                             Por padrão, é None e não utilizado na consulta atual.
 
         Returns:
             pd.DataFrame: DataFrame contendo os registros dos negócios de balcão de renda fixa
                           da B3 para a data ou período de referência.
-        
+
         Exemplo:
             >>> manager_captura = capturaDados()
             >>> df_negocios = captura.baseB3NegociosBalcaoRendaFixa(refdate=date(2023, 7, 18))
             >>> print(df_negocios.head(1))
         """
-
 
         try:
 
@@ -1771,7 +1768,6 @@ class capturaDados:
                 str_condition = f"REFDATE = '{refdate}'"
             else:
                 str_condition = f"REFDATE BETWEEN '{refdateInicio}' AND '{refdate}'"
-
 
             df = self.manager_sql.select_dataframe(
                 f"SELECT * FROM TB_B3_NEGOCIOS_BALCAO_RENDA_FIXA WHERE {str_condition}"
@@ -1784,8 +1780,3 @@ class capturaDados:
         except Exception as e:
             self.logger.error(log_message=f"capturaDados - baseB3NegociosBalcaoRendaFixa - {str(e)}")
             raise
-
-
-
-
-

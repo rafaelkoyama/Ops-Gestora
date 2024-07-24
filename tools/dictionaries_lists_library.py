@@ -31,10 +31,6 @@ class FixedDictionariesListsLibrary:
             "CRYSTAL FIC FIM CP"
         ]
 
-
-
-
-
         self.lista_tipo_ativos_observaveis = ["Debênture"]
         self.lista_tipo_ativos_titulos_publicos = ["Tit. Publicos", "Compromissada"]
         self.lista_tipo_ativos_fluxo = ["CCB", "CDB", "LF", "LFSC", "LFSN-PRE"]
