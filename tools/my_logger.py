@@ -1,4 +1,16 @@
-from __init__ import *
+import inspect
+import os
+import sys
+from datetime import datetime
+
+import win32com.client as win32
+from __init__ import append_paths
+
+append_paths()
+
+from tools.db_helper import SQL_Manager  # noqa: E402
+
+# -------------------------------------------------------------------------------------------------------
 
 VERSION_APP = "2.0.4"
 VERSION_REFDATE = "2024-07-05"
@@ -8,17 +20,9 @@ SCRIPT_NAME = os.path.basename(__file__)
 if ENVIRONMENT == "DEVELOPMENT":
     print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
-# -----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------
+# Classes:
 
-import inspect
-import sys
-from datetime import datetime
-
-import win32com.client as win32
-
-from tools.db_helper import SQL_Manager
-
-# -----------------------------------------------------------------------
 
 class Logger:
 

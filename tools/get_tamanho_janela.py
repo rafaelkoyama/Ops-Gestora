@@ -1,16 +1,13 @@
 import os
-import sys
-
-str_user = os.getlogin()
-script_name = os.path.basename(sys.argv[0])
-
-sys.path.append(
-    f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos Python\\Modules"
-)
 
 import ttkbootstrap as ttk
+from __init__ import append_paths
 
-from tools.my_logger import Logger
+append_paths()
+
+from tools.my_logger import Logger  # noqa: E402
+
+script_name = os.path.basename(__file__)
 
 root = ttk.Window(themename="darkly")
 root.title("Capturar Tamanho da Janela")
