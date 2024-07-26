@@ -1333,7 +1333,7 @@ class AutoProcessManager():
 class App(Window):
 
     def __init__(self):
-        super().__init__(themename='vapor')
+        super().__init__(themename='cyborg')
 
         self.lista_processos_app = ['INDEXADORES_CDI_SELIC']
 
