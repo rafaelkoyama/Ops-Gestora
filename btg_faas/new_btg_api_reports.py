@@ -1,29 +1,27 @@
-from __init__ import *
-
-VERSION_APP = "1.2.1"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-# -----------------------------------------------------------------------
-
 from datetime import date
 
 import numpy as np
 import pandas as pd
+from __init__ import *  # noqa: F403, F405, E402
 
-from btg_faas.btg_api_connect import BTGDataManager
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools
+append_paths()  # noqa: F403, F405, E402
 
-# -----------------------------------------------------------------------
+from btg_faas.btg_api_connect import BTGDataManager  # noqa: F403, F405, E402
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+from tools.my_logger import Logger  # noqa: F403, F405, E402
+from tools.py_tools import FuncoesPyTools  # noqa: F403, F405, E402
 
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "1.2.1"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405, E402
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405, E402
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
 
 pd.set_option("future.no_silent_downcasting", True)
 
@@ -83,12 +81,12 @@ class BTGReports:
             2: "pdf",
             3: "xml",
             10: "xlsx",
-            "STRIX YIELD MASTER F": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix Yield Master",
-            "STRIX YIELD FC FIRF": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix Yield FIC",
-            "STRIX D1 FIC FIRF": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix D1 FIC",
-            "STRIX FIA": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix FIA",
-            "CRYSTAL FIC FIM CP": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Crystal",
-            "STRIX INFRA FICFIRF": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix Infra",
+            "STRIX YIELD MASTER F": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix Yield Master",  # noqa: F405, E501
+            "STRIX YIELD FC FIRF": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix Yield FIC",  # noqa: F405
+            "STRIX D1 FIC FIRF": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix D1 FIC",  # noqa: F405
+            "STRIX FIA": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix FIA",  # noqa: F405
+            "CRYSTAL FIC FIM CP": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Crystal",  # noqa: F405
+            "STRIX INFRA FICFIRF": f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras\\Strix Infra",  # noqa: F405
         }
 
         self.dict_funds_index = {
@@ -472,9 +470,7 @@ class BTGReports:
                     parametros_api(refdate, fundo), p_point
                 )
                 return data
-            except Exception as e:
-                # self.logger.error(f"Erro ao capturar dados de taxa adm. cotistas: {e}")
-                # self.logger.error(f"Captura dados, taxa adm cotistas {fundo}. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         def tratamento_dados_api(refdate, fundo, data):
@@ -510,9 +506,7 @@ class BTGReports:
                         ]
                     ]
                     return df
-                except Exception as e:
-                    # self.logger.error(f"Erro ao tratar dados de taxa adm. cotistas: {e}")
-                    # self.logger.error(f"Tratamento taxa adm. cotistas {fundo}. Verificar log.", True)
+                except Exception as e:  # noqa: F841
                     return pd.DataFrame({})
 
         def insert_dados_api(refdate, fundo, df):
@@ -558,17 +552,17 @@ class BTGReports:
     def download_carteiras(self, refdate, fundo, tipo_arq):
 
         def verifica_arquivo_existe(file_path: str) -> bool:
-            return os.path.exists(file_path)
+            return os.path.exists(file_path)  # noqa: F403, F405, E402
 
         def join_path(refdate, fundo, tipo):
             if tipo == 10:
-                return os.path.join(
+                return os.path.join(  # noqa: F403, F405, E402
                     self.dict_suporte_download[fundo],
                     self.dict_suporte_download[tipo],
                     f"ResumoCarteira_{fundo.replace(' ', '_')}_{refdate.strftime('%Y%m%d')}.{self.dict_suporte_download[tipo]}",
                 )
             else:
-                return os.path.join(
+                return os.path.join(  # noqa: F403, F405, E402
                     self.dict_suporte_download[fundo],
                     self.dict_suporte_download[tipo],
                     f"{fundo.replace(' ', '_')}_{refdate.strftime('%Y%m%d')}.{self.dict_suporte_download[tipo]}",
@@ -733,19 +727,15 @@ class BTGReports:
                     parametros_api(refdate, fundo), p_point
                 )
                 return data
-            except Exception as e:
-                # self.logger.error(f"Erro ao capturar dados de extrato cc {fundo}: {e}")
-                # self.logger.error(f"Captura dados, extrato cc {fundo}. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         def tratamento_dados_api(refdate, fundo, data):
             if data is None:
                 df = pd.DataFrame({})
-                # self.logger.error(f"Extrato cc do fundo {fundo}. Conferir log para mais info.", True)
                 return df
             elif data["result"] == "No records":
                 df = pd.DataFrame({})
-                # self.logger.info(f"'No records' extrato cc para o fundo {fundo}", True)
                 return df
             else:
                 try:
@@ -781,9 +771,7 @@ class BTGReports:
                         df[coluna] = df.loc[:, coluna].replace("", 0)
                         df[coluna] = df[coluna].astype(float)
                     return df
-                except Exception as e:
-                    # self.logger.error(f"Tratamento dados extrato cc: {e}")
-                    # self.logger.error(f"Tratamento dados extrato cc {fundo}. Verificar log.", True)
+                except Exception as e:  # noqa: F841
                     return pd.DataFrame({})
 
         def insert_dados_api(refdate, fundo, df):
@@ -792,15 +780,11 @@ class BTGReports:
                     "TB_BASE_BTG_EXTRATO_CONTA_CORRENTE",
                     f"FUNDO = '{fundo}' AND REFDATE = '{refdate.strftime('%Y-%m-%d')}'",
                 )
-                # self.logger.info(f"Registros deletados para o fundo {fundo}")
                 self.sql_manager.insert_dataframe(
                     df, "TB_BASE_BTG_EXTRATO_CONTA_CORRENTE"
                 )
-                # self.logger.info(f"Registros inseridos para o fundo {fundo}")
             except Exception as e:
                 print(e)
-                # self.logger.error(f"Insert dados extrato cc: {e}")
-                # self.logger.error(f"Insert dados cc {fundo}. Verificar log.", True)
 
         def run_processo_api(refdate, fundo):
             try:
@@ -850,19 +834,15 @@ class BTGReports:
                     parametros_api(refdate, fundo, tipo_mov), p_point
                 )
                 return data
-            except Exception as e:
-                # self.logger.error(f"Erro ao capturar dados de mov cotistas cotistas: {e}")
-                # self.logger.error(f"Captura dados, mov cotistas {fundo}. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         def tratamento_dados_api(fundo, data):
             if data is None:
                 df = pd.DataFrame({})
-                # self.logger.error(f"Sem dados para o fundo {fundo}. Conferir log para mais info.", True)
                 return df
             elif data["result"] == "No records":
                 df = pd.DataFrame({})
-                # self.logger.info(f"'No records' para o fundo {fundo}")
                 return df
             else:
                 try:
@@ -917,9 +897,7 @@ class BTGReports:
                     ]
 
                     return df
-                except Exception as e:
-                    # self.logger.error(f"Erro ao tratar dados de movimentação cotistas: {e}")
-                    # self.logger.error(f"Tratamento movimentação cotistas {fundo}. Verificar log.", True)
+                except Exception as e:  # noqa: F841
                     return pd.DataFrame({})
 
         def insert_dados_api(refdate, fundo, df):
@@ -928,14 +906,13 @@ class BTGReports:
                     "TB_BASE_BTG_MOVIMENTACAO_PASSIVO",
                     f"FUNDO = '{fundo}' AND DATA_OPERACAO = '{refdate.strftime('%Y-%m-%d')}'",
                 )
-                # self.logger.info(f"Registros deletados para o fundo {fundo}")
+
                 self.sql_manager.insert_dataframe(
                     df, "TB_BASE_BTG_MOVIMENTACAO_PASSIVO"
                 )
-                # self.logger.info(f"Registros inseridos para o fundo {fundo}")
+
                 return "ok"
             except Exception as e:
-                # self.logger.error(f"Erro ao inserir dados de taxa adm. cotistas: {e}")
                 return e
 
         def run_processo_api(refdate, fundo, tipo_mov):
@@ -977,9 +954,7 @@ class BTGReports:
             try:
                 data = self.btg_manager.get_data(p_params=None, p_point=p_point)
                 return data
-            except Exception as e:
-                # self.logger.error(f"Capturar dados status carteiras: {e}")
-                # self.logger.error(f"Captura dados, status carteiras. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         self.pricing_matrix_types = captura_dados_api()
@@ -991,9 +966,7 @@ class BTGReports:
             try:
                 data = self.btg_manager.get_data(p_params=None, p_point=p_point)
                 return data
-            except Exception as e:
-                # self.logger.error(f"Capturar dados status carteiras: {e}")
-                # self.logger.error(f"Captura dados, status carteiras. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         self.pricing_matrix_indexes = captura_dados_api()
@@ -1005,9 +978,7 @@ class BTGReports:
             try:
                 data = self.btg_manager.get_data(p_params=None, p_point=p_point)
                 return data
-            except Exception as e:
-                # self.logger.error(f"Capturar dados status carteiras: {e}")
-                # self.logger.error(f"Captura dados, status carteiras. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         self.pricing_matrix_issuers = captura_dados_api()
@@ -1028,14 +999,11 @@ class BTGReports:
             self.pricing_matrix_indexes()
             self.pricing_matrix_issuers()
 
-            sleep(5)
-
             p_point = "reports/Pricing/Matrix"
             try:
                 data = self.btg_manager.get_data(parametros_api(), p_point)
                 return data
-            except Exception as e:
-                # self.logger.error(f"Erro ao capturar dados de princig matrix: {e}")
+            except Exception as e:  # noqa: F841
                 return None
 
         def tratamento_upload_dados(refdate):
@@ -1081,9 +1049,7 @@ class BTGReports:
                     parametros_api(refdate, fundo), p_point
                 )
                 return data
-            except Exception as e:
-                # self.logger.error(f"Erro ao capturar dados FixedIncome {fundo}: {e}")
-                # self.logger.error(f"Erro ao capturar dados FixedIncome {fundo}. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         def tratamento_dados_api(refdate, fundo, data):
@@ -1201,12 +1167,8 @@ class BTGReports:
                             "TP_FLOW",
                         ]
                     ]
-                    # df.loc[:, 'MARGEM'] = df['MARGEM'].fillna(0).astype(float)
-                    # self.logger.info(f"Tratamento dados FixedIncome {fundo} ok!")
                     return df
-                except Exception as e:
-                    # self.logger.error(f"Tratamento dados FixedIncome: {e}")
-                    # self.logger.error(f"Tratamento dados FixedIncome {fundo}. Verificar log.", True)
+                except Exception as e:  # noqa: F841
                     return pd.DataFrame({})
 
         def insert_dados_api(refdate, fundo, df):
@@ -1252,19 +1214,15 @@ class BTGReports:
             try:
                 data = self.btg_manager.get_data(parametros_api(refdate), p_point)
                 return data
-            except Exception as e:
-                # self.logger.error(f"Erro ao capturar dados Princing Curves: {e}")
-                # self.logger.error(f"Erro ao capturar dados Princing Curves. Verificar log.", True)
+            except Exception as e:  # noqa: F841
                 return None
 
         def tratamento_dados_api(refdate, data):
             if data is None:
                 df = pd.DataFrame({})
-                # self.logger.error(f"Dados Pricing Curves. Conferir log para mais info.", True)
                 return df
             elif data["result"] == "No records":
                 df = pd.DataFrame({})
-                # self.logger.info(f"'No records' Pricing Curves", True)
                 return df
             else:
                 try:
@@ -1297,9 +1255,7 @@ class BTGReports:
                     df["FONTE"] = "BTG"
                     return df
 
-                except Exception as e:
-                    # self.logger.error(f"Tratamento dados Pricing Curves: {e}")
-                    # self.logger.error(f"Tratamento dados Pricing Curves. Verificar log.", True)
+                except Exception as e:  # noqa: F841
                     return pd.DataFrame({})
 
         def insert_dados_api(refdate, df):
