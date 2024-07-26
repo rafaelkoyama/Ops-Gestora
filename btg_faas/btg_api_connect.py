@@ -1,35 +1,34 @@
-from __init__ import *
-
-VERSION_APP = "2.2.2"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-# -----------------------------------------------------------------------
-
 import json
 import re
 from time import sleep, time
 
 import requests
+from __init__ import *  # noqa: F403, F405, E402
 
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
+append_paths()  # noqa: F403, F405, E402
 
-# -----------------------------------------------------------------------
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+from tools.my_logger import Logger  # noqa: F403, F405, E402
+
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "2.2.2"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405, E402
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405, E402
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
 
 
 def verifica_arquivo_existe(file_path: str) -> bool:
-    return os.path.exists(file_path)
+    return os.path.exists(file_path)  # noqa: F403, F405, E402
 
 
 def deleta_arquivo_existente(file_path: str):
-    os.remove(file_path)
+    os.remove(file_path)  # noqa: F403, F405, E402
 
 
 class BTGDataManager:
@@ -60,8 +59,8 @@ class BTGDataManager:
 
         if ENVIRONMENT == "DEVELOPMENT":
             self.base_url = "https://funds-uat.btgpactual.com"
-            self.client_id = os.getenv("USER_BTG_FAAS")
-            self.client_secret = os.getenv("PASS_BTG_FASS_UAT")
+            self.client_id = os.getenv("USER_BTG_FAAS")  # noqa: F403, F405, E402
+            self.client_secret = os.getenv("PASS_BTG_FASS_UAT")  # noqa: F403, F405, E402
         else:
             self.base_url = "https://funds.btgpactual.com"
             self.client_id = client_id
@@ -69,7 +68,7 @@ class BTGDataManager:
 
         self.token, self.timeout = self.authenticate()
 
-        if btg_reports != None:
+        if btg_reports is not None:
             self.dict_suporte_download = btg_reports.dict_suporte_download
 
     def authenticate(self):
@@ -93,14 +92,14 @@ class BTGDataManager:
         token = response.json()["access_token"]
         timeout = time() + response.json()["expires_in"] - 100
         self.logger.info(
-            log_message=f"BTGDataManager - Token - ok", script_original=SCRIPT_NAME
+            log_message="BTGDataManager - Token - ok", script_original=SCRIPT_NAME
         )
         return token, timeout
 
     def check_token(self):
         if time() > self.timeout:
             self.logger.info(
-                log_message=f"BTGDataManager - Token - Expirado",
+                log_message="BTGDataManager - Token - Expirado",
                 script_original=SCRIPT_NAME,
             )
             self.token, self.timeout = self.authenticate()
@@ -111,7 +110,7 @@ class BTGDataManager:
         self.logger.reset_index()
         self.check_token()
 
-        if self.token != None:
+        if self.token is not None:
 
             if p_point in [
                 "reports/Fund",
@@ -227,7 +226,7 @@ class BTGDataManager:
                     elif filename.endswith(".pdf"):
                         tipo_file = "pdf"
 
-                file_name = os.path.join(
+                file_name = os.path.join(  # noqa: F403, F405, E402
                     self.dict_suporte_download[fundo],
                     tipo_file,
                     f"{'ResumoCarteira_' if tipo_file == 'xlsx' else ''}"

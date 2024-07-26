@@ -213,7 +213,7 @@ if st.session_state["risco_fundos"] == True:
                         ),
                         unsafe_allow_html=True,
                     )
-                    sub_tb_col2.write(f"**Top5 - Menores Rentabilidades**")
+                    sub_tb_col2.write("**Top5 - Menores Rentabilidades**")
                     sub_tb_col2.write(
                         st.session_state.riskcalculator_yield.menoresRentabilidades().to_html(
                             index=False,

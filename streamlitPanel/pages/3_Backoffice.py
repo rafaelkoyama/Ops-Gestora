@@ -1,31 +1,32 @@
-from __init__ import *
-
-VERSION_APP = "1.0.0"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-# -----------------------------------------------------------------------
-
 from datetime import date
 from io import BytesIO
 
 import pandas as pd
 import streamlit as st
+from __init__ import *  # noqa: F403
 
-from streamlitPanel.streamlit_helper import (
+append_paths()  # noqa: F405
+
+from streamlitPanel.streamlit_helper import (  # noqa: F403, F405, E402
     dict_aux_btg_bases_cc_e_movs,
     extratoContaCorrenteFundos,
     movimentacaoPassivos,
     opcoes_fundos,
     passivosCotizar,
 )
-from tools.db_helper import SQL_Manager
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "1.0.0"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
 
 st.set_page_config(
     page_title="Strix Capital - Painel de Controle",
@@ -100,7 +101,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.1])
         col2.image(
-            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # noqa: F403, F405, E402  # type: ignore
             width=500,
         )
 
@@ -114,48 +115,48 @@ def contatos_btg():
             "**Eventos de Fundos**",
             help="Abertura de novos fundos, alteração de regulamento, transferência, cisão, incorporação, masterização etc.",
         )
-        st.write(os.getenv("EMAIL_BTG_EVENTOS_FUNDOS"))
-        st.text(os.getenv("TEXT_BTG_EVENTOS_FUNDOS_1"))
-        st.text(os.getenv("TEL_BTG_EVENTOS_FUNDOS_1"))
-        st.text(os.getenv("TEXT_BTG_EVENTOS_FUNDOS_2"))
-        st.text(os.getenv("TEL_BTG_EVENTOS_FUNDOS_2"))
+        st.write(os.getenv("EMAIL_BTG_EVENTOS_FUNDOS"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_EVENTOS_FUNDOS_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_EVENTOS_FUNDOS_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_EVENTOS_FUNDOS_2"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_EVENTOS_FUNDOS_2"))  # noqa: F403, F405, E402
 
     with col2.container(border=True):
         st.markdown(
             "**Ativos de Fundo**",
             help="Cálculo de cota, controle de caixa, boletagem de ativos etc.",
         )
-        st.write(os.getenv("EMAIL_BTG_ATIVOS_FUNDOS"))
-        st.text(os.getenv("TEXT_BTG_ATIVOS_FUNDOS_1"))
-        st.text(os.getenv("TEL_BTG_ATIVOS_FUNDOS_1"))
-        st.text(os.getenv("TEXT_BTG_ATIVOS_FUNDOS_2"))
-        st.text(os.getenv("TEL_BTG_ATIVOS_FUNDOS_2"))
+        st.write(os.getenv("EMAIL_BTG_ATIVOS_FUNDOS"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_ATIVOS_FUNDOS_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_ATIVOS_FUNDOS_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_ATIVOS_FUNDOS_2"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_ATIVOS_FUNDOS_2"))  # noqa: F403, F405, E402
 
     with col3.container(border=True):
         st.markdown(
             "**Middle Liquids**",
             help="Movimentações de cotistas, extratos de posição, informes de rendimento, relatórios, etc.",
         )
-        st.write(os.getenv("EMAIL_BTG_MIDDLE_LIQUIDS"))
-        st.text(os.getenv("TEXT_BTG_MIDDLE_LIQUIDS_1"))
-        st.text(os.getenv("TEL_BTG_MIDDLE_LIQUIDS_1"))
-        st.text(os.getenv("TEXT_BTG_MIDDLE_LIQUIDS_2"))
-        st.text(os.getenv("TEL_BTG_MIDDLE_LIQUIDS_2"))
+        st.write(os.getenv("EMAIL_BTG_MIDDLE_LIQUIDS"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_MIDDLE_LIQUIDS_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_MIDDLE_LIQUIDS_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_MIDDLE_LIQUIDS_2"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_MIDDLE_LIQUIDS_2"))  # noqa: F403, F405, E402
 
     with col4.container(border=True):
         st.markdown(
             "**Middle Support/Receita**",
             help="Contratos de distribuição, reversão e receita.",
         )
-        st.write(os.getenv("EMAIL_BTG_MIDDLE_SUPPORT"))
-        st.text(os.getenv("TEXT_BTG_MIDDLE_SUPPORT_1"))
-        st.text(os.getenv("TEL_BTG_MIDDLE_SUPPORT_1"))
-        st.text(os.getenv("TEXT_BTG_MIDDLE_SUPPORT_2"))
-        st.text(os.getenv("TEL_BTG_MIDDLE_SUPPORT_2"))
+        st.write(os.getenv("EMAIL_BTG_MIDDLE_SUPPORT"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_MIDDLE_SUPPORT_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_MIDDLE_SUPPORT_1"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEXT_BTG_MIDDLE_SUPPORT_2"))  # noqa: F403, F405, E402
+        st.text(os.getenv("TEL_BTG_MIDDLE_SUPPORT_2"))  # noqa: F403, F405, E402
 
     with col1.container(border=True):
         st.markdown("**FaaS**", help="API BTG")
-        st.write(os.getenv("EMAIL_BTG_FAAS"))
+        st.write(os.getenv("EMAIL_BTG_FAAS"))  # noqa: F403, F405, E402
 
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -198,7 +199,7 @@ st.sidebar.button(
 
 # -----------------------------------------------------------------------------------------------------------------------
 
-if st.session_state["extrato_cc_fundos"] == True:
+if st.session_state["extrato_cc_fundos"] is True:
     st.session_state.logo_backoffice = False
     LogoStrix()
 
@@ -232,9 +233,7 @@ if st.session_state["extrato_cc_fundos"] == True:
 
         for fundo in fundos:
             df_fundo = df_extrato_all[
-                df_extrato_all["FUNDO"]
-                == st.session_state.dict_aux_btg_bases_cc_e_movs[fundo]
-            ].copy()
+                df_extrato_all["FUNDO"] == st.session_state.dict_aux_btg_bases_cc_e_movs[fundo]].copy()
             df_fundo.drop(columns=["FUNDO"], inplace=True)
             col2.subheader(f"Fundo: {fundo}")
             if len(df_fundo) > 0:
@@ -242,7 +241,7 @@ if st.session_state["extrato_cc_fundos"] == True:
             else:
                 col2.write("Sem movimentação no período.")
 
-if st.session_state["movs_passivo_fundos"] == True:
+if st.session_state["movs_passivo_fundos"] is True:
     st.session_state.logo_backoffice = False
     LogoStrix()
 
@@ -276,9 +275,7 @@ if st.session_state["movs_passivo_fundos"] == True:
 
         for fundo in fundos:
             df_fundo = df_movs_passivo[
-                df_movs_passivo["Fundo"]
-                == st.session_state.dict_aux_btg_bases_cc_e_movs[fundo]
-            ].copy()
+                df_movs_passivo["Fundo"] == st.session_state.dict_aux_btg_bases_cc_e_movs[fundo]].copy()
             df_fundo.drop(columns=["Fundo"], inplace=True)
 
             col2.subheader(f"Fundo: {fundo}")
@@ -303,7 +300,7 @@ if st.session_state["movs_passivo_fundos"] == True:
             else:
                 col2.write("Sem movimentação no período.")
 
-if st.session_state["passivos_cotizar"] == True:
+if st.session_state["passivos_cotizar"] is True:
     st.session_state.logo_backoffice = False
     LogoStrix()
 
@@ -339,9 +336,7 @@ if st.session_state["passivos_cotizar"] == True:
 
         for fundo in fundos:
             df_fundo = df_passivos_cotizar[
-                df_passivos_cotizar["Fundo"]
-                == st.session_state.dict_aux_btg_bases_cc_e_movs[fundo]
-            ].copy()
+                df_passivos_cotizar["Fundo"] == st.session_state.dict_aux_btg_bases_cc_e_movs[fundo]].copy()
             df_fundo.drop(columns=["Fundo"], inplace=True)
             col2.subheader(f"Fundo: {fundo}")
             if len(df_fundo) > 0:
@@ -349,7 +344,7 @@ if st.session_state["passivos_cotizar"] == True:
             else:
                 col2.write("Sem passivos a cotizar.")
 
-if st.session_state["contatos_btg"] == True:
+if st.session_state["contatos_btg"] is True:
     st.session_state.logo_backoffice = False
     LogoStrix()
     contatos_btg()

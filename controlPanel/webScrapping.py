@@ -1,17 +1,3 @@
-from __init__ import *
-
-VERSION_APP = '1.1.1'
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-#-----------------------------------------------------------------------
-
 import shutil
 import time
 from datetime import date, datetime
@@ -19,17 +5,30 @@ from datetime import date, datetime
 import numpy as np
 import pandas as pd
 import requests
+from __init__ import *  # noqa: F403, F405, E402
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools
+append_paths()  # noqa: F403, F405, E402
 
-#-----------------------------------------------------------------------
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+from tools.my_logger import Logger  # noqa: F403, F405, E402
+from tools.py_tools import FuncoesPyTools  # noqa: F403, F405, E402
+
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = '1.1.1'
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405, E402
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405, E402
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
 
 pd.set_option('future.no_silent_downcasting', True)
 
@@ -37,6 +36,7 @@ pd.set_option('future.no_silent_downcasting', True)
 edge_options = Options()
 edge_options.add_argument("--log-level=3")  # Suprimir logs de depuração do navegador
 edge_options.add_argument("--silent")  # Suprimir logs adicionais do navegador
+
 
 class openEdgeDriver():
 
@@ -50,6 +50,7 @@ class openEdgeDriver():
         except Exception as e:
             print(f"Erro ao abrir o navegador: {e}")
             return None
+
 
 class debenturesAnbima():
     def __init__(self, manager_sql=None, funcoes_pytools=None, logger=None):
@@ -82,7 +83,7 @@ class debenturesAnbima():
 
     def pathArq(self):
         str_date = self.funcoes_pytools.date_str_arquivo_anbima(self.refdate)
-        return f'C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\ANBIMA\\{str_date}.xls'
+        return f'C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\ANBIMA\\{str_date}.xls'  # noqa: F403, F405, E402
 
     def downloadArquivo(self):
         if not self.check_arq_salvo:
@@ -92,13 +93,10 @@ class debenturesAnbima():
 
                 with open(self.path_arq, 'wb') as file:
                     file.write(response.content)
-                # print(f"Arquivo salvo: {self.path_arq}")
                 return 'ok'
             except requests.RequestException as e:
-                # print(f'Erro ao baixar o arquivo: {e}')
                 return e
             except Exception as e:
-                # print(f'Erro inesperado: {e}')
                 return e
         else:
             return 'ok'
@@ -106,13 +104,40 @@ class debenturesAnbima():
     def ipcaSpread(self):
 
         df_ipca_spread = pd.read_excel(self.path_arq, sheet_name='IPCA_SPREAD', skiprows=8)
-        df_ipca_spread = df_ipca_spread.rename(columns={'Unnamed: 0': 'COD_ATIVO', 'Unnamed: 1': 'NOME', 'Unnamed: 2': 'REPAC_VENC', 'Unnamed: 3': 'INDICE_CORRECAO', 'Unnamed: 4': 'TAXA_COMPRA', 'Unnamed: 5': 'TAXA_VENDA', 'Unnamed: 6': 'TAXA_INDICATIVA', 'Unnamed: 7': 'DESVIO_PADRAO', 'Min.': 'INTERVALO_MIN', 'Máx.': 'INTERVALO_MAX', 'Unnamed: 10': 'PU', 'Unnamed: 11': 'PERC_PU_PAR', 'Unnamed: 12': 'DURATION', 'Unnamed: 13': 'PERC_REUNE', 'Unnamed: 14': 'REFERENCIA_NTNB'})
+        df_ipca_spread = df_ipca_spread.rename(columns={
+            'Unnamed: 0': 'COD_ATIVO',
+            'Unnamed: 1': 'NOME',
+            'Unnamed: 2': 'REPAC_VENC',
+            'Unnamed: 3': 'INDICE_CORRECAO',
+            'Unnamed: 4': 'TAXA_COMPRA',
+            'Unnamed: 5': 'TAXA_VENDA',
+            'Unnamed: 6': 'TAXA_INDICATIVA',
+            'Unnamed: 7': 'DESVIO_PADRAO',
+            'Min.': 'INTERVALO_MIN',
+            'Máx.': 'INTERVALO_MAX',
+            'Unnamed: 10': 'PU',
+            'Unnamed: 11': 'PERC_PU_PAR',
+            'Unnamed: 12': 'DURATION',
+            'Unnamed: 13': 'PERC_REUNE',
+            'Unnamed: 14': 'REFERENCIA_NTNB'
+        })
+
         df_ipca_spread.insert(0, 'REFDATE', self.refdate.strftime('%Y-%m-%d'))
         df_ipca_spread = df_ipca_spread[(df_ipca_spread['COD_ATIVO'].str.len() <= 10) & (df_ipca_spread['COD_ATIVO'].notna())]
         for column in ['REPAC_VENC', 'REFERENCIA_NTNB']:
             df_ipca_spread[column] = pd.to_datetime(df_ipca_spread[column], dayfirst=True)
 
-        for column in ['TAXA_COMPRA', 'TAXA_VENDA', 'TAXA_INDICATIVA', 'DESVIO_PADRAO', 'INTERVALO_MIN', 'INTERVALO_MAX', 'PU', 'PERC_PU_PAR', 'DURATION']:
+        for column in [
+            'TAXA_COMPRA',
+            'TAXA_VENDA',
+            'TAXA_INDICATIVA',
+            'DESVIO_PADRAO',
+            'INTERVALO_MIN',
+            'INTERVALO_MAX',
+            'PU',
+            'PERC_PU_PAR',
+            'DURATION'
+        ]:
             df_ipca_spread[column] = df_ipca_spread[column].replace('--', np.nan).replace('N/D', np.nan).astype('float64')
 
         return df_ipca_spread
@@ -120,14 +145,40 @@ class debenturesAnbima():
     def diSpread(self):
 
         df_di_spread = pd.read_excel(self.path_arq, sheet_name='DI_SPREAD', skiprows=8)
-        df_di_spread = df_di_spread.rename(columns={'Unnamed: 0': 'COD_ATIVO', 'Unnamed: 1': 'NOME', 'Unnamed: 2': 'REPAC_VENC', 'Unnamed: 3': 'INDICE_CORRECAO', 'Unnamed: 4': 'TAXA_COMPRA', 'Unnamed: 5': 'TAXA_VENDA', 'Unnamed: 6': 'TAXA_INDICATIVA', 'Unnamed: 7': 'DESVIO_PADRAO', 'Min.': 'INTERVALO_MIN', 'Máx.': 'INTERVALO_MAX', 'Unnamed: 10': 'PU', 'Unnamed: 11': 'PERC_PU_PAR', 'Unnamed: 12': 'DURATION', 'Unnamed: 13': 'PERC_REUNE'})
+        df_di_spread = df_di_spread.rename(columns={
+            'Unnamed: 0': 'COD_ATIVO',
+            'Unnamed: 1': 'NOME',
+            'Unnamed: 2': 'REPAC_VENC',
+            'Unnamed: 3': 'INDICE_CORRECAO',
+            'Unnamed: 4': 'TAXA_COMPRA',
+            'Unnamed: 5': 'TAXA_VENDA',
+            'Unnamed: 6': 'TAXA_INDICATIVA',
+            'Unnamed: 7': 'DESVIO_PADRAO',
+            'Min.': 'INTERVALO_MIN',
+            'Máx.': 'INTERVALO_MAX',
+            'Unnamed: 10': 'PU',
+            'Unnamed: 11': 'PERC_PU_PAR',
+            'Unnamed: 12': 'DURATION',
+            'Unnamed: 13': 'PERC_REUNE'
+        })
+
         df_di_spread.insert(0, 'REFDATE', self.refdate.strftime('%Y-%m-%d'))
         df_di_spread = df_di_spread[(df_di_spread['COD_ATIVO'].str.len() <= 10) & (df_di_spread['COD_ATIVO'].notna())]
         df_di_spread['REFERENCIA_NTNB'] = pd.NaT
         df_di_spread['REPAC_VENC'] = pd.to_datetime(df_di_spread['REPAC_VENC'], dayfirst=True)
         df_di_spread.drop(columns=['Unnamed: 14'], inplace=True)
 
-        for column in ['TAXA_COMPRA', 'TAXA_VENDA', 'TAXA_INDICATIVA', 'DESVIO_PADRAO', 'INTERVALO_MIN', 'INTERVALO_MAX', 'PU', 'PERC_PU_PAR', 'DURATION']:
+        for column in [
+            'TAXA_COMPRA',
+            'TAXA_VENDA',
+            'TAXA_INDICATIVA',
+            'DESVIO_PADRAO',
+            'INTERVALO_MIN',
+            'INTERVALO_MAX',
+            'PU',
+            'PERC_PU_PAR',
+            'DURATION'
+        ]:
             df_di_spread[column] = df_di_spread[column].replace('--', np.nan).replace('N/D', np.nan).astype('float64')
 
         return df_di_spread
@@ -135,14 +186,40 @@ class debenturesAnbima():
     def diPercentual(self):
 
         df_di_percentual = pd.read_excel(self.path_arq, sheet_name='DI_PERCENTUAL', skiprows=8)
-        df_di_percentual = df_di_percentual.rename(columns={'Unnamed: 0': 'COD_ATIVO', 'Unnamed: 1': 'NOME', 'Unnamed: 2': 'REPAC_VENC', 'Unnamed: 3': 'INDICE_CORRECAO', 'Unnamed: 4': 'TAXA_COMPRA', 'Unnamed: 5': 'TAXA_VENDA', 'Unnamed: 6': 'TAXA_INDICATIVA', 'Unnamed: 7': 'DESVIO_PADRAO', 'Min.': 'INTERVALO_MIN', 'Máx.': 'INTERVALO_MAX', 'Unnamed: 10': 'PU', 'Unnamed: 11': 'PERC_PU_PAR', 'Unnamed: 12': 'DURATION', 'Unnamed: 13': 'PERC_REUNE'})
+        df_di_percentual = df_di_percentual.rename(columns={
+            'Unnamed: 0': 'COD_ATIVO',
+            'Unnamed: 1': 'NOME',
+            'Unnamed: 2': 'REPAC_VENC',
+            'Unnamed: 3': 'INDICE_CORRECAO',
+            'Unnamed: 4': 'TAXA_COMPRA',
+            'Unnamed: 5': 'TAXA_VENDA',
+            'Unnamed: 6': 'TAXA_INDICATIVA',
+            'Unnamed: 7': 'DESVIO_PADRAO',
+            'Min.': 'INTERVALO_MIN',
+            'Máx.': 'INTERVALO_MAX',
+            'Unnamed: 10': 'PU',
+            'Unnamed: 11': 'PERC_PU_PAR',
+            'Unnamed: 12': 'DURATION',
+            'Unnamed: 13': 'PERC_REUNE'
+        })
+
         df_di_percentual.insert(0, 'REFDATE', self.refdate.strftime('%Y-%m-%d'))
         df_di_percentual = df_di_percentual[(df_di_percentual['COD_ATIVO'].str.len() <= 10) & (df_di_percentual['COD_ATIVO'].notna())]
         df_di_percentual['REFERENCIA_NTNB'] = pd.NaT
         df_di_percentual['REPAC_VENC'] = pd.to_datetime(df_di_percentual['REPAC_VENC'], dayfirst=True)
         df_di_percentual.drop(columns=['Unnamed: 14'], inplace=True)
 
-        for column in ['TAXA_COMPRA', 'TAXA_VENDA', 'TAXA_INDICATIVA', 'DESVIO_PADRAO', 'INTERVALO_MIN', 'INTERVALO_MAX', 'PU', 'PERC_PU_PAR', 'DURATION']:
+        for column in [
+            'TAXA_COMPRA',
+            'TAXA_VENDA',
+            'TAXA_INDICATIVA',
+            'DESVIO_PADRAO',
+            'INTERVALO_MIN',
+            'INTERVALO_MAX',
+            'PU',
+            'PERC_PU_PAR',
+            'DURATION'
+        ]:
             df_di_percentual[column] = df_di_percentual[column].replace('--', np.nan).replace('N/D', np.nan).astype('float64')
 
         return df_di_percentual
@@ -179,10 +256,10 @@ class debenturesAnbima():
 
             check_arquivo = self.downloadArquivo()
             if check_arquivo == 'ok':
-                self.logger.info(log_message=f"debenturesAnbima - Arquivo baixado com sucesso", script_original=SCRIPT_NAME)
+                self.logger.info(log_message="debenturesAnbima - Arquivo baixado com sucesso", script_original=SCRIPT_NAME)
                 check_upload = self.uploadBases()
                 if check_upload == 'ok':
-                    self.logger.info(log_message=f"debenturesAnbima - Upload - ok", script_original=SCRIPT_NAME)
+                    self.logger.info(log_message="debenturesAnbima - Upload - ok", script_original=SCRIPT_NAME)
                     return 'ok'
                 else:
                     self.logger.error(log_message=f"debenturesAnbima - check_update - {check_upload}", script_original=SCRIPT_NAME)
@@ -193,6 +270,7 @@ class debenturesAnbima():
         else:
             self.logger.info(log_message="debenturesAnbima - Já baixado anteriormente", script_original=SCRIPT_NAME)
             return 'Já baixado anteriormente'
+
 
 class curvasB3():
 
@@ -218,12 +296,12 @@ class curvasB3():
             script_original=SCRIPT_NAME
         )
 
-        self.path_download = f"C:\\Users\\{str_user}\\Downloads"
-        self.path_to_move = f'C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Arquivos bases'
+        self.path_download = f"C:\\Users\\{str_user}\\Downloads"  # noqa: F403, F405, E402
+        self.path_to_move = f'C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Arquivos bases'  # noqa: F403, F405
 
         self.dict_tipo = {
             'DI X PRE': 'PRE'
-            }
+        }
 
     def set_refdate(self, refdate: date):
         self.refdate = refdate
@@ -239,7 +317,7 @@ class curvasB3():
 
         check_all_curvas_ok = set(self.dict_tipo.keys()).issubset(lista_curvas_sql)
 
-        if check_all_curvas_ok == True:
+        if check_all_curvas_ok is True:
             return True
         else:
             return [item for item in set(self.dict_tipo.keys()) if item not in lista_curvas_sql]
@@ -250,7 +328,10 @@ class curvasB3():
         start_time = time.time()
 
         while True:
-            if self.funcoes_pytools.checkFileExists(os.path.join(self.path_download, f"{self.dict_tipo[self.tipo]}{self.refdate.strftime('%Y%m%d')} .xls")):
+            if self.funcoes_pytools.checkFileExists(
+                os.path.join(  # noqa: F403, F405, E402
+                    self.path_download,
+                    f"{self.dict_tipo[self.tipo]}{self.refdate.strftime('%Y%m%d')} .xls")):
                 self.ajustaNomeArquivo()
                 return True
             elif time.time() - start_time > timeout:
@@ -261,16 +342,16 @@ class curvasB3():
     def urlDownload(self):
         str_date = self.refdate.strftime('%d/%m/%Y')
         str_date1 = self.refdate.strftime('%Y%m%d')
-        return f"https://www2.bmf.com.br/pages/portal/bmfbovespa/boletim1/TxRef1.asp?Data={str_date}&Data1={str_date1}&slcTaxa={self.dict_tipo[self.tipo]}"
+        return f"https://www2.bmf.com.br/pages/portal/bmfbovespa/boletim1/TxRef1.asp?Data={str_date}&Data1={str_date1}&slcTaxa={self.dict_tipo[self.tipo]}"  # noqa: E501
 
     def ajustaNomeArquivo(self):
         arq = f"{self.dict_tipo[self.tipo]}{self.refdate.strftime('%Y%m%d')} .xls"
         arq_corrigido = f"{self.dict_tipo[self.tipo]}{self.refdate.strftime('%Y%m%d')}.html"
-        os.rename(os.path.join(self.path_download, arq), os.path.join(self.path_download, arq_corrigido))
+        os.rename(os.path.join(self.path_download, arq), os.path.join(self.path_download, arq_corrigido))  # noqa: F403, F405, E402
 
     def moveArquivo(self):
 
-        source_file = os.path.join(self.path_download, self.arq)
+        source_file = os.path.join(self.path_download, self.arq)  # noqa: F403, F405, E402
 
         if not self.funcoes_pytools.checkFileExists(self.destination_file):
             shutil.move(source_file, self.destination_file)
@@ -282,7 +363,7 @@ class curvasB3():
         try:
             self.driver.find_element(By.XPATH, "/html/body/form/table[2]/tbody/tr/td/b")
             return False
-        except:
+        except:  # noqa: F403, F405, E402, E722
             download_button = self.driver.find_element(By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[2]/img")
             download_button.click()
             self.check_download = self.verificaDownload()
@@ -306,7 +387,8 @@ class curvasB3():
 
     def uploadBase(self):
 
-        self.manager_sql.delete_records('TB_CURVAS', f"REFDATE = '{self.refdate.strftime('%Y-%m-%d')}' AND CURVA = '{self.tipo}' AND FONTE = 'B3'")
+        self.manager_sql.delete_records(
+            'TB_CURVAS', f"REFDATE = '{self.refdate.strftime('%Y-%m-%d')}' AND CURVA = '{self.tipo}' AND FONTE = 'B3'")
         self.manager_sql.insert_dataframe(self.df, 'TB_CURVAS')
 
     def call_processo(self):
@@ -331,7 +413,7 @@ class curvasB3():
 
         for tipo in self.dict_tipo:
             arq = f"{self.dict_tipo[tipo]}{self.refdate.strftime('%Y%m%d')}.html"
-            destination_file = os.path.join(self.path_to_move, arq)
+            destination_file = os.path.join(self.path_to_move, arq)  # noqa: F403, F405, E402
             if not self.funcoes_pytools.checkFileExists(destination_file):
                 return True
 
@@ -343,7 +425,7 @@ class curvasB3():
 
         check_sql_uploaded = self.check_sql_uploaded()
 
-        if check_sql_uploaded != True:
+        if check_sql_uploaded is not True:
 
             results = {}
 
@@ -358,22 +440,23 @@ class curvasB3():
                 if tipo in check_sql_uploaded:
                     self.tipo = tipo
                     self.arq = f"{self.dict_tipo[self.tipo]}{self.refdate.strftime('%Y%m%d')}.html"
-                    self.destination_file = os.path.join(self.path_to_move, self.arq)
+                    self.destination_file = os.path.join(self.path_to_move, self.arq)  # noqa: F403, F405, E402
                     results[self.tipo] = f"{self.call_processo()}"
                 else:
-                    results[self.tipo] = f"Baixado anteriormente."
+                    results[self.tipo] = "Baixado anteriormente."
 
-            if p_webdriver is None: 
+            if p_webdriver is None:
                 self.driver.quit()
 
             return results
         else:
             return 'all_uploaded'
 
+
 class dadosB3():
 
     def __init__(self, manager_sql=None, funcoes_pytools=None, logger=None):
-        
+
         if manager_sql is None:
             self.manager_sql = SQL_Manager()
         else:
@@ -422,7 +505,7 @@ class dadosB3():
 
         try:
             last_date_disp = datetime.strptime(
-                self.driver.find_element(By.XPATH, '//*[@id="col_esq"]/div/form/div[2]/div/label').get_property("innerText")[-10:], 
+                self.driver.find_element(By.XPATH, '//*[@id="col_esq"]/div/form/div[2]/div/label').get_property("innerText")[-10:],
                 '%d/%m/%Y'
             ).date()
         except Exception:
@@ -473,7 +556,7 @@ class dadosB3():
         self.check_media = self.driver.find_element(By.NAME, "chk_M1")
         self.check_selic = self.driver.find_element(By.NAME, "chk_M6")
 
-        self.btn_limpar = self.driver.find_element(By.XPATH,'//*[@id="col_esq"]/div/form/div[6]/div/a[1]')
+        self.btn_limpar = self.driver.find_element(By.XPATH, '//*[@id="col_esq"]/div/form/div[6]/div/a[1]')
         self.btn_pesquisar = self.driver.find_element(By.XPATH, '//*[@id="col_esq"]/div/form/div[6]/div/a[2]')
 
         self.btn_limpar.click()
@@ -508,52 +591,70 @@ class dadosB3():
         for dados in list_dados_cdi_selic_b3:
             if datetime.strptime(dados[0], '%d/%m/%Y').date() == self.refdate:
                 self.cdi_ano = round(dados[3] / 100, 9)
-                self.cdi_dia = round(dados[4] -1, 11)
+                self.cdi_dia = round(dados[4] - 1, 11)
                 self.selic_ano = round(dados[5] / 100, 9)
-                self.selic_dia = round((1 + self.selic_ano) ** (1/252) - 1, 7)
+                self.selic_dia = round((1 + self.selic_ano) ** (1 / 252) - 1, 7)
                 break
 
     def upload_cdi_b3(self):
 
         dmenos1 = self.funcoes_pytools.workday_br(self.refdate, -1)
 
-        cota_cdi_dmenos1 = self.manager_sql.select_dataframe(f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} WHERE INDEXADOR = 'CDI' AND REFDATE = '{self.funcoes_pytools.convert_data_sql(dmenos1)}'")
+        cota_cdi_dmenos1 = self.manager_sql.select_dataframe(
+            f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} "
+            f"WHERE INDEXADOR = 'CDI' AND REFDATE = '{self.funcoes_pytools.convert_data_sql(dmenos1)}'")
 
         if len(cota_cdi_dmenos1) == 0:
-            self.result_scrapping_cdi_selic_b3['CDI'] = f"Cota CDI dmenos1 indisponivel"
+            self.result_scrapping_cdi_selic_b3['CDI'] = "Cota CDI dmenos1 indisponivel"
         else:
             cota_cdi_dmenos1 = cota_cdi_dmenos1['COTA_INDEXADOR'][0]
 
             cota_cdi_d0 = cota_cdi_dmenos1 * (1 + self.cdi_dia)
 
-            df_cdi_d0 = pd.DataFrame({'REFDATE': [self.refdate], 'INDEXADOR': ['CDI'], 'VALOR_ANO': [self.cdi_ano], 'VALOR_DIA': [self.cdi_dia], 'COTA_INDEXADOR': [cota_cdi_d0]})
+            df_cdi_d0 = pd.DataFrame({
+                'REFDATE': [self.refdate],
+                'INDEXADOR': ['CDI'],
+                'VALOR_ANO': [self.cdi_ano],
+                'VALOR_DIA': [self.cdi_dia],
+                'COTA_INDEXADOR': [cota_cdi_d0]
+            })
 
-            self.manager_sql.delete_records(self.tb_indexadores, f"REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' AND INDEXADOR = 'CDI'")
+            self.manager_sql.delete_records(
+                self.tb_indexadores, f"REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' AND INDEXADOR = 'CDI'")
             self.manager_sql.insert_dataframe(df_cdi_d0, self.tb_indexadores)
-            self.result_scrapping_cdi_selic_b3['CDI'] = f"Upload ok!"
+            self.result_scrapping_cdi_selic_b3['CDI'] = "Upload ok!"
 
     def upload_selic_b3(self):
 
         dmenos1 = self.funcoes_pytools.workday_br(self.refdate, -1)
 
-        cota_selic_dmenos1 = self.manager_sql.select_dataframe(f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} WHERE INDEXADOR = 'SELIC' AND REFDATE = '{self.funcoes_pytools.convert_data_sql(dmenos1)}'")
+        cota_selic_dmenos1 = self.manager_sql.select_dataframe(
+            f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} "
+            f"WHERE INDEXADOR = 'SELIC' AND REFDATE = '{self.funcoes_pytools.convert_data_sql(dmenos1)}'")
 
         if len(cota_selic_dmenos1) == 0:
-            self.result_scrapping_cdi_selic_b3['SELIC'] = f"Cota SELIC dmenos1 indisponivel"
+            self.result_scrapping_cdi_selic_b3['SELIC'] = "Cota SELIC dmenos1 indisponivel"
         else:
             cota_selic_dmenos1 = cota_selic_dmenos1['COTA_INDEXADOR'][0]
 
             cota_selic_d0 = cota_selic_dmenos1 * (1 + self.selic_dia)
 
-            df_selic_d0 = pd.DataFrame({'REFDATE': [self.refdate], 'INDEXADOR': ['SELIC'], 'VALOR_ANO': [self.cdi_ano], 'VALOR_DIA': [self.cdi_dia], 'COTA_INDEXADOR': [cota_selic_d0]})
+            df_selic_d0 = pd.DataFrame({
+                'REFDATE': [self.refdate],
+                'INDEXADOR': ['SELIC'],
+                'VALOR_ANO': [self.cdi_ano],
+                'VALOR_DIA': [self.cdi_dia],
+                'COTA_INDEXADOR': [cota_selic_d0]
+            })
 
-            self.manager_sql.delete_records(self.tb_indexadores, f"REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' AND INDEXADOR = 'SELIC'")
+            self.manager_sql.delete_records(
+                self.tb_indexadores, f"REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' AND INDEXADOR = 'SELIC'")
             self.manager_sql.insert_dataframe(df_selic_d0, self.tb_indexadores)
-            self.result_scrapping_cdi_selic_b3['SELIC'] = f"Upload ok!"
+            self.result_scrapping_cdi_selic_b3['SELIC'] = "Upload ok!"
 
     def check_sql_uploaded(self):
 
-        str_cdi_selic = f"'CDI', 'SELIC'"
+        str_cdi_selic = "'CDI', 'SELIC'"
 
         lista_sql = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT INDEXADOR AS INDEXADORES FROM {self.tb_indexadores} "
@@ -562,7 +663,7 @@ class dadosB3():
 
         check_cdi_sql = set(['CDI', 'SELIC']).issubset(lista_sql)
 
-        if check_cdi_sql == True:
+        if check_cdi_sql is True:
             return True
         else:
             return [item for item in set(['CDI', 'SELIC']) if item not in lista_sql]
@@ -573,7 +674,7 @@ class dadosB3():
 
         check_sql_uploaded = self.check_sql_uploaded()
 
-        if check_sql_uploaded != True:
+        if check_sql_uploaded is not True:
 
             if p_webdriver is None:
                 self.open_edge()
@@ -591,15 +692,17 @@ class dadosB3():
             else:
                 if p_webdriver is None:
                     self.driver.quit()
-                self.result_scrapping_cdi_selic_b3['Scrapping'] = f"{self.funcoes_pytools.convert_data_sql(self.refdate)} não disponível na B3"
+                self.result_scrapping_cdi_selic_b3['Scrapping'] = (
+                    f"{self.funcoes_pytools.convert_data_sql(self.refdate)} não disponível na B3")
             return self.result_scrapping_cdi_selic_b3
         else:
             return 'all_uploaded'
 
+
 class agendaDebenturesAnbima():
 
     def __init__(self, manager_sql=None):
-        
+
         if manager_sql is None:
             self.manager_sql = SQL_Manager()
         else:
@@ -608,7 +711,7 @@ class agendaDebenturesAnbima():
         self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
 
         self.dict_vne = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT ATIVO, VNE FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO = 'DEBÊNTURE'")\
+            "SELECT DISTINCT ATIVO, VNE FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO = 'DEBÊNTURE'")\
             .set_index('ATIVO')['VNE'].to_dict()
 
         self.service = Service(EdgeChromiumDriverManager().install())
@@ -657,7 +760,7 @@ class agendaDebenturesAnbima():
                 if i == 0:
                     df.loc[i, 'VNA'] = vna
                 else:
-                    df.loc[i, 'VNA'] = round(df.loc[i-1, 'VNA'] * (1 - df.loc[i-1, 'PERCENTUAL']/100), 7)
+                    df.loc[i, 'VNA'] = round(df.loc[i - 1, 'VNA'] * (1 - df.loc[i - 1, 'PERCENTUAL'] / 100), 7)
             df = df[['ATIVO', 'DATA_LIQUIDACAO', 'VNA']]
             return df
 
@@ -680,11 +783,11 @@ class agendaDebenturesAnbima():
             time.sleep(20)
             try:
                 tabela = driver.find_element(By.XPATH, self.xpath_tabela)
-            except Exception as e:
+            except Exception as e:  # noqa: F841
                 print(self.base_url(ativo))
                 print("")
                 input(f"Erro ao buscar ativo {ativo}. Aperte enter para continuar")
-                
+
                 tabela = driver.find_element(By.XPATH, self.xpath_tabela)
 
             linhas = tabela.find_elements(By.TAG_NAME, "tr")
@@ -709,13 +812,14 @@ class agendaDebenturesAnbima():
         df_list = []
 
         for ativo in self.ativos:
-            df_vna = df[(df['ATIVO']==ativo) \
-                & ((df['EVENTO']=='Amortizacao') | (df['EVENTO']=='Vencimento (resgate)') | (df['EVENTO']=='Resgate total antecipado'))]\
-                [['ATIVO', 'DATA_LIQUIDACAO', 'PERCENTUAL']].reset_index(drop=True)
+            df_vna = df[(df['ATIVO'] == ativo) &  # noqa: F403, F405, E402, W504
+                    ((df['EVENTO'] == 'Amortizacao') |  # noqa: F403, F405, E402, W504
+                    (df['EVENTO'] == 'Vencimento (resgate)') |  # noqa: E501, F405, E402, W504
+                    (df['EVENTO'] == 'Resgate total antecipado'))][['ATIVO', 'DATA_LIQUIDACAO', 'PERCENTUAL']].reset_index(drop=True)  # noqa: E501, F405, E402, W504
 
             df_vna = self.cria_vna(df_vna, self.dict_vne[ativo])
 
-            df_ativo = df[df['ATIVO']==ativo].copy()
+            df_ativo = df[df['ATIVO'] == ativo].copy()
             df_ativo = pd.merge(df_ativo, df_vna, on=['DATA_LIQUIDACAO', 'ATIVO'], how='left')
             df_ativo['VNA'] = df_ativo['VNA'].bfill()
 
@@ -739,7 +843,7 @@ class agendaDebenturesAnbima():
 
         print("Upload agenda Anbima...")
 
-        self.manager_sql.delete_records('TB_FLUXO_PAGAMENTO_ATIVOS_REFDATE', 
+        self.manager_sql.delete_records('TB_FLUXO_PAGAMENTO_ATIVOS_REFDATE',
             f"REFDATE = '{self.funcoes_pytools.convert_data_sql(self.refdate)}' "
             f"AND ATIVO IN ({self.ativos_str})")
 
@@ -762,4 +866,3 @@ class agendaDebenturesAnbima():
         self.upload_agenda_anbima()
 
         print("Processo finalizado")
-

@@ -1,29 +1,17 @@
-from __init__ import *
-
-VERSION_APP = "2.3.1"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-CONNECT_MANAGER_BTG = True
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-#-----------------------------------------------------------------------
-
 import threading
 from datetime import date, datetime, timedelta
 from time import sleep
 
 import pandas as pd
+from __init__ import *  # noqa: F403, F405, E402
 from ttkbootstrap import Toplevel, Window
 from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
 from ttkbootstrap.tableview import Tableview
 
-from btg_faas.new_btg_api_reports import BTGReports
-from controlPanel.biblioteca_widgets import (
+append_paths()  # noqa: F403, F405, E402
+
+from btg_faas.new_btg_api_reports import BTGReports  # noqa: F403, F405, E402
+from controlPanel.biblioteca_widgets import (  # noqa: F403, F405, E402
     newBooleanVar,
     newButton,
     newCheckButton,
@@ -41,25 +29,36 @@ from controlPanel.biblioteca_widgets import (
     newStringVar,
     newWindowStatus,
 )
-from controlPanel.sistemaCadastro import TelaCadastro
-from controlPanel.webScrapping import (
+from controlPanel.sistemaCadastro import TelaCadastro  # noqa: F403, F405, E402
+from controlPanel.webScrapping import (  # noqa: F403, F405, E402
     curvasB3,
     dadosB3,
     debenturesAnbima,
     openEdgeDriver,
 )
-from risco.calculadoraRisco import calculadoraAtivos
-from tools.biblioteca_processos import UpdateIndexadores, UploadArquivosXML
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools, OutlookHandler
+from risco.calculadoraRisco import calculadoraAtivos  # noqa: F403, F405, E402
+from tools.biblioteca_processos import (  # noqa: F403, F405, E402
+    UpdateIndexadores,
+    UploadArquivosXML,
+)
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+from tools.my_logger import Logger  # noqa: F403, F405, E402
+from tools.py_tools import FuncoesPyTools, OutlookHandler  # noqa: F403, F405, E402
 
-#---------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------
 
+VERSION_APP = "2.3.1"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405, E402
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405, E402
+CONNECT_MANAGER_BTG = True
 
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
 
+# -------------------------------------------------------------------------------------------------------
 
-base_path_carteiras = f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras"
+base_path_carteiras = f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Carteiras"  # noqa: F403, F405, E402
 
 
 class ProcessManagerAutoOpen:
@@ -146,32 +145,33 @@ class ProcessManagerAutoOpen:
                     )
 
                 str_head = (
-                    f"Mensagem automática.\n\n"
-                    f"## Resumo Fundos ##\n\n"
+                    "Mensagem automática.\n\n"
+                    "## Resumo Fundos ##\n\n"
                 )
 
                 str_head_fundos = (
-                    f"## Resgates ##\n\n"
+                    "## Resgates ##\n\n"
                 )
 
                 str_body = str_head + str_body_fundos + str_head_fundos + str_body_movs
 
                 if ENVIRONMENT == "DEVELOPMENT":
-                    to_lista = [os.getenv("EMAIL_ME")]
+                    to_lista = [os.getenv("EMAIL_ME")]  # noqa: F403, F405, E402
                 else:
-                    to_lista = [os.getenv("EMAIL_BO")]
+                    to_lista = [os.getenv("EMAIL_BO")]  # noqa: F403, F405, E402
 
                 self.manager_outlook.send_email(
                     to_list=to_lista,
                     subject=f"Passivos a Cotizar: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}",
                     msg_body=str_body,
-                    sendBehalf=os.getenv("EMAIL_ROBO"),
+                    sendBehalf=os.getenv("EMAIL_ROBO"),  # noqa: F403, F405, E402
                     importance=2)
 
             self.manager_sql.insert_manual(
                 table_name="TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS",
                 list_columns=['REFDATE', 'PROCESSO', 'STATUS'],
                 list_values=[refdate, 'OPEN_CHECK_PASSIVOS_A_COTIZAR', '1'])
+
 
 class ProcessManager:
 
@@ -210,7 +210,7 @@ class ProcessManager:
             'ok': '✅',
             'not': '❌',
             'warning': '⚠️'
-            }
+        }
 
         self.window_status_outras_bases = None
         self.window_status_bases_carteiras = None
@@ -222,7 +222,7 @@ class ProcessManager:
 
     def btgFundsPerfNav(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: BTG Funds Perf NAV\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: BTG Funds Perf NAV\n")
 
         lista_fundos_sql = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT FUNDO AS FUNDOS FROM TB_BASE_BTG_PERFORMANCE_COTA "
@@ -241,11 +241,11 @@ class ProcessManager:
                 else:
                     self.window_status_bases_carteiras.text_box.insert("end", f"  {fundo}: Carteira não liberada.\n")
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def updateIndexadores(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: Update Indexadores\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: Update Indexadores\n")
 
         results = UpdateIndexadores(
             refdate=self.refdate_upload_bases_carteiras,
@@ -257,11 +257,11 @@ class ProcessManager:
                 self.window_status_bases_carteiras.text_box.insert("end", f"  {indexador}: Sucesso!\n")
             else:
                 self.window_status_bases_carteiras.text_box.insert("end", f"  {indexador}: {results[indexador]}\n")
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def btgFundsPerfCotistas(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: BTG Perfornace Cotistas\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: BTG Perfornace Cotistas\n")
 
         lista_fundos_sql = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT FUNDO AS FUNDOS FROM TB_BASE_BTG_PERFORMANCE_COTISTAS "
@@ -280,11 +280,11 @@ class ProcessManager:
                 else:
                     self.window_status_bases_carteiras.text_box.insert("end", f"  {fundo}: Carteira não liberada.\n")
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def btgFundsAdmCotistas(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: BTG Adm Cotistas\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: BTG Adm Cotistas\n")
 
         lista_fundos_sql = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT FUNDO AS FUNDOS FROM TB_BASE_BTG_TX_ADM_COTISTAS "
@@ -303,11 +303,11 @@ class ProcessManager:
                 else:
                     self.window_status_bases_carteiras.text_box.insert("end", f"  {fundo}: Carteira não liberada.\n")
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def btgFundsDownloadCarteiras(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: Download Carteiras BTG")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: Download Carteiras BTG")
 
         for fundo in self.fundos_btg:
             if self.dict_status_carteiras_bases_btg[fundo] == 'Aguardando aprovação'\
@@ -316,21 +316,20 @@ class ProcessManager:
                 for tipo in self.tipos_carteiras_btg:
                     self.window_status_bases_carteiras.text_box.insert(
                         "end", f"    {self.manager_btg.download_carteiras(
-                        fundo=fundo, tipo_arq=tipo, refdate=self.refdate_upload_bases_carteiras)}\n")
+                            fundo=fundo, tipo_arq=tipo, refdate=self.refdate_upload_bases_carteiras)}\n")
             else:
                 self.window_status_bases_carteiras.text_box.insert("end", f"\n  {fundo}: Carteira não liberada.\n")
 
-
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def runCapturaArquivosEmail(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: Arquivos email\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: Arquivos email\n")
         self.capturaXmlKinea()
         self.capturaArquivosMasterFIA()
         self.capturaXmlYieldMastercc()
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def capturaXmlKinea(self):
 
@@ -339,11 +338,11 @@ class ProcessManager:
         str_carteira_xml_to_find = f"FD54794777000102_{refdate.strftime('%Y%m%d')}"
         ext_carteira = "xml"
         str_file_carteira = f"STRIX_KINEA_INFRA_{refdate.strftime('%Y%m%d')}.xml"
-        file_to_save = os.path.join(
+        file_to_save = os.path.join(  # noqa: F403, F405, E402
             base_path_carteiras, str_kinea_infra_carteira, ext_carteira, str_file_carteira)
 
         if self.funcoes_pytools.checkFileExists(file_to_save):
-            self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira Strix Kinea Infra: Arquivo já baixado anteriormente.\n")
+            self.window_status_bases_carteiras.text_box.insert("end", "  Carteira Strix Kinea Infra: Arquivo já baixado anteriormente.\n")
         else:
 
             if self.app.manager_outlook.save_attachments_from_folder(
@@ -352,9 +351,9 @@ class ProcessManager:
                     str_to_find_attachment=str_carteira_xml_to_find,
                     str_endswith=f".{ext_carteira}",
                     str_to_save_attchament=file_to_save):
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira Strix Kinea Infra: salvo na pasta.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Carteira Strix Kinea Infra: salvo na pasta.\n")
             else:
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira Strix Kinea Infra: não encontrado.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Carteira Strix Kinea Infra: não encontrado.\n")
 
     def capturaArquivosMasterFIA(self):
 
@@ -365,11 +364,11 @@ class ProcessManager:
         str_arquivo_to_find = f"5218073_{self.funcoes_pytools.workday_br(refdate, 1).strftime('%Y-%m-%d')}"
         ext_arquivo = "xml"
         str_file_name = f"{str_arquivo_to_find}.xml"
-        file_to_save = os.path.join(
+        file_to_save = os.path.join(  # noqa: F403, F405, E402
             base_path_carteiras, "Strix Master FIA", "Conta Corrente", str_file_name)
 
         if self.funcoes_pytools.checkFileExists(file_to_save):
-            self.window_status_bases_carteiras.text_box.insert("end", f"  Extrato CC Strix Master FIA: Arquivo já baixado anteriormente.\n")
+            self.window_status_bases_carteiras.text_box.insert("end", "  Extrato CC Strix Master FIA: Arquivo já baixado anteriormente.\n")
         else:
             if self.app.manager_outlook.save_attachments_from_folder(
                     name_folder=pasta_arquivo,
@@ -377,9 +376,9 @@ class ProcessManager:
                     str_to_find_attachment=str_arquivo_to_find,
                     str_endswith=f".{ext_arquivo}",
                     str_to_save_attchament=file_to_save):
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Extrato CC Strix Master FIA: Arquivo salvo na pasta.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Extrato CC Strix Master FIA: Arquivo salvo na pasta.\n")
             else:
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Extrato CC Strix Master FIA: Arquivo não encontrado.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Extrato CC Strix Master FIA: Arquivo não encontrado.\n")
 
         # Carteiras:
 
@@ -388,11 +387,12 @@ class ProcessManager:
         str_arquivo_to_find = f"ResumoCarteira_STRIX MASTER FC FIA_{refdate.strftime('%Y%m%d')}"
         ext_arquivo = "xml"
         str_file_name = f"STRIX_MASTER_FIA_{refdate.strftime('%Y%m%d')}.xml"
-        file_to_save = os.path.join(
+        file_to_save = os.path.join(  # noqa: F403, F405, E402
             base_path_carteiras, "Strix Master FIA", "xml", str_file_name)
 
         if self.funcoes_pytools.checkFileExists(file_to_save):
-            self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira XML Strix Master FIA: Arquivo já baixado anteriormente.\n")
+            self.window_status_bases_carteiras.text_box.insert(
+                "end", "  Carteira XML Strix Master FIA: Arquivo já baixado anteriormente.\n")
         else:
             if self.app.manager_outlook.save_attachments_from_folder(
                     name_folder=pasta_arquivo,
@@ -400,21 +400,21 @@ class ProcessManager:
                     str_to_find_attachment=str_arquivo_to_find,
                     str_endswith=f".{ext_arquivo}",
                     str_to_save_attchament=file_to_save):
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira XML Strix Master FIA: Arquivo salvo na pasta.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Carteira XML Strix Master FIA: Arquivo salvo na pasta.\n")
             else:
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira XML Strix Master FIA: Arquivo não encontrado.\n")
-
+                self.window_status_bases_carteiras.text_box.insert("end", "  Carteira XML Strix Master FIA: Arquivo não encontrado.\n")
 
         # xlsx:
         pasta_arquivo = "Strix Master FIA"
         str_arquivo_to_find = f"ResumoCarteira_STRIX MASTER FC FIA_{refdate.strftime('%Y%m%d')}"
         ext_arquivo = "xlsx"
         str_file_name = f"ResumoCarteira_STRIX_MASTER_FC_FIA_{refdate.strftime('%Y%m%d')}.xlsx"
-        file_to_save = os.path.join(
+        file_to_save = os.path.join(  # noqa: F403, F405, E402
             base_path_carteiras, "Strix Master FIA", "xlsx", str_file_name)
 
         if self.funcoes_pytools.checkFileExists(file_to_save):
-            self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira XLSX Strix Master FIA: Arquivo já baixado anteriormente.\n")
+            self.window_status_bases_carteiras.text_box.insert(
+                "end", "  Carteira XLSX Strix Master FIA: Arquivo já baixado anteriormente.\n")
         else:
             if self.app.manager_outlook.save_attachments_from_folder(
                     name_folder=pasta_arquivo,
@@ -422,9 +422,9 @@ class ProcessManager:
                     str_to_find_attachment=str_arquivo_to_find,
                     str_endswith=f".{ext_arquivo}",
                     str_to_save_attchament=file_to_save):
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira XLSX Strix Master FIA: Arquivo salvo na pasta.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Carteira XLSX Strix Master FIA: Arquivo salvo na pasta.\n")
             else:
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Carteira XLSX Strix Master FIA: Arquivo não encontrado.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Carteira XLSX Strix Master FIA: Arquivo não encontrado.\n")
 
     def capturaXmlYieldMastercc(self):
 
@@ -433,11 +433,12 @@ class ProcessManager:
         str_arquivo_to_find = f"5138475_{self.funcoes_pytools.workday_br(refdate, 1).strftime('%Y-%m-%d')}"
         ext_arquivo = "xlsx"
         str_file_arquivo = f"{str_arquivo_to_find}.xlsx"
-        file_to_save = os.path.join(
+        file_to_save = os.path.join(  # noqa: F403, F405, E402
             base_path_carteiras, "Strix Yield Master", "Conta Corrente", str_file_arquivo)
 
         if self.funcoes_pytools.checkFileExists(file_to_save):
-            self.window_status_bases_carteiras.text_box.insert("end", f"  Extrato CC Strix Yield Master: Arquivo já baixado anteriormente.\n")
+            self.window_status_bases_carteiras.text_box.insert(
+                "end", "  Extrato CC Strix Yield Master: Arquivo já baixado anteriormente.\n")
         else:
             if self.app.manager_outlook.save_attachments_from_folder(
                     name_folder=pasta_arquivo,
@@ -445,13 +446,13 @@ class ProcessManager:
                     str_to_find_attachment=str_arquivo_to_find,
                     str_endswith=f".{ext_arquivo}",
                     str_to_save_attchament=file_to_save):
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Extrato CC Strix Yield Master: Arquivo salvo na pasta.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Extrato CC Strix Yield Master: Arquivo salvo na pasta.\n")
             else:
-                self.window_status_bases_carteiras.text_box.insert("end", f"  Extrato CC Strix Yield Master: Arquivo não encontrado.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "  Extrato CC Strix Yield Master: Arquivo não encontrado.\n")
 
     def uploadCarteirasXML(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: Upload Carteiras XML\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: Upload Carteiras XML\n")
 
         results = self.manager_xml.run_carteiras(refdate=self.refdate_upload_bases_carteiras)
 
@@ -464,11 +465,11 @@ class ProcessManager:
                     str_erro = str_erro + erro + ' | '
                 self.window_status_bases_carteiras.text_box.insert("end", f"  {fundo}: {str_erro[:-2]}\n")
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def uploadExtratosCCXML(self):
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"Rodando: Upload Extratos CC XML\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "Rodando: Upload Extratos CC XML\n")
 
         self.manager_xml.set_refdate(self.refdate_upload_bases_carteiras)
 
@@ -477,7 +478,7 @@ class ProcessManager:
         for fundo in results:
             self.window_status_bases_carteiras.text_box.insert("end", f"  {fundo}: {results[fundo]}\n")
 
-        self.window_status_bases_carteiras.text_box.insert("end", f"\n")
+        self.window_status_bases_carteiras.text_box.insert("end", "\n")
 
     def janelaToken(self):
 
@@ -489,7 +490,7 @@ class ProcessManager:
 
         def execute_calculadora_ativos(text_box):
 
-            text_box.insert("end", f"\n\nRodando calculadora ativos...\n\n")
+            text_box.insert("end", "\n\nRodando calculadora ativos...\n\n")
 
             self.result_calculo = {}
 
@@ -512,12 +513,12 @@ class ProcessManager:
 
             text_box.delete("1.0", "end")
 
-            text_box.insert("end", f"Resultados Calculadora Ativos - Fluxo e PU\n")
+            text_box.insert("end", "Resultados Calculadora Ativos - Fluxo e PU\n")
 
             for ativo in self.result_calculo.keys():
                 text_box.insert("end", f"  {ativo}: {self.result_calculo[ativo]}\n")
 
-            text_box.insert("end", f"\nResultados Calculadora Ativos - Duration\n")
+            text_box.insert("end", "\nResultados Calculadora Ativos - Duration\n")
 
             for ativo in self.result_duration.keys():
                 text_box.insert("end", f"  {ativo}: {self.result_duration[ativo]}\n")
@@ -526,11 +527,11 @@ class ProcessManager:
 
         if self.app.opt_check_btn_curva_di1fut.get() and self.app.opt_check_btn_anbima_debs.get() and self.app.opt_check_btn_cdi.get() \
                 and self.app.opt_check_btn_selic.get() and self.app.opt_check_btn_carteira_yield_master.get():
- 
+
             janela_status = newWindowStatus(status_running=False, title="Calculadora Ativos")
             janela_status.geometry("260x140")
             progress_bar = newProgressBar(janela_status, mode="indeterminate", style="info.Horizontal.TProgressbar")
-            progress_bar.grid(row=1, column=0, sticky="ew", padx=10, pady=(0,10))
+            progress_bar.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 10))
             progress_bar.start(15)
 
             text_box = janela_status.text_box
@@ -541,7 +542,7 @@ class ProcessManager:
             results_calculadora_ativos(text_box)
             self.call_status_all_bases()
             janela_status.lift()
- 
+
     def check_bases_calculadora(self):
 
         refdate = datetime.strptime(self.app.entry_refdate_calculadora.entry.get(), "%d/%m/%Y").date()
@@ -637,7 +638,7 @@ class ProcessManager:
         def check_xml_fundos(app):
             lista_fundos_xml = self.manager_sql.select_dataframe(
                 f"SELECT DISTINCT FUNDO FROM TB_XML_CARTEIRAS_HEADER WHERE REFDATE = '{self.refdate_status_bases}'")['FUNDO'].tolist()
-            
+
             if len(lista_fundos_xml) == 0:
                 app.lbl_status_bases_xml_carteiras.set_bootstyle('danger')
                 app.txt_status_bases_xml_carteiras.set(f"{self.dict_icons_status['not']} XML Carteiras")
@@ -651,7 +652,7 @@ class ProcessManager:
         def check_perf_nav(app):
             lista_fundos_perf_nav = self.manager_sql.select_dataframe(
                 f"SELECT DISTINCT FUNDO FROM TB_BASE_BTG_PERFORMANCE_COTA WHERE REFDATE = '{self.refdate_status_bases}'")['FUNDO'].tolist()
-            
+
             if len(lista_fundos_perf_nav) == 0:
                 app.lbl_status_bases_perf_nav.set_bootstyle('danger')
                 app.txt_status_bases_perf_nav.set(f"{self.dict_icons_status['not']} Perf Nav")
@@ -666,7 +667,7 @@ class ProcessManager:
             lista_fundos_perf_cotistas = self.manager_sql.select_dataframe(
                 f"SELECT DISTINCT FUNDO FROM TB_BASE_BTG_PERFORMANCE_COTISTAS \
                     WHERE REFDATE = '{self.refdate_status_bases}'")['FUNDO'].tolist()
-            
+
             if len(lista_fundos_perf_cotistas) == 0:
                 app.lbl_status_bases_perf_cotistas.set_bootstyle('danger')
                 app.txt_status_bases_perf_cotistas.set(f"{self.dict_icons_status['not']} Perf Cotistas")
@@ -681,7 +682,7 @@ class ProcessManager:
             lista_fundos_adm_cotistas = self.manager_sql.select_dataframe(
                 f"SELECT DISTINCT FUNDO FROM TB_BASE_BTG_TX_ADM_COTISTAS \
                     WHERE REFDATE = '{self.refdate_status_bases}'")['FUNDO'].tolist()
-            
+
             if len(lista_fundos_adm_cotistas) == 0:
                 app.lbl_status_bases_adm_cotistas.set_bootstyle('danger')
                 app.txt_status_bases_adm_cotistas.set(f"{self.dict_icons_status['not']} Adm Cotistas")
@@ -760,7 +761,7 @@ class ProcessManager:
                 f"SELECT DISTINCT ATIVO FROM TB_CARTEIRAS WHERE REFDATE = "
                 f"'{self.funcoes_pytools.convert_data_sql(self.refdate_status_bases)}' AND FINANCEIRO_D0 <> 0 AND "
                 f"TIPO_ATIVO IN ({str_tipo_ativos})"
-                )
+            )
 
             lista_ativos = self.manager_sql.select_dataframe(sQuery)['ATIVO'].tolist()
 
@@ -771,7 +772,7 @@ class ProcessManager:
             if len(lista_ativos_fluxo) == 0:
                 app.lbl_status_bases_calculadora.set_bootstyle('danger')
                 app.txt_status_bases_calculadora.set(f"{self.dict_icons_status['not']} Calculadora")
-            elif set(lista_ativos).issubset(set(lista_ativos_fluxo)) == True:
+            elif set(lista_ativos).issubset(set(lista_ativos_fluxo)) is True:
                 app.lbl_status_bases_calculadora.set_bootstyle('success')
                 app.txt_status_bases_calculadora.set(f"{self.dict_icons_status['ok']} Calculadora")
             else:
@@ -794,28 +795,28 @@ class ProcessManager:
 
     def upload_anbima_debentures(self):
 
-        self.window_status_outras_bases.text_box.insert("end", f"Rodando: Debêntures Anbima.\n")
+        self.window_status_outras_bases.text_box.insert("end", "Rodando: Debêntures Anbima.\n")
         check_debentures_anbima = self.debenturesAnbima.run(refdate=self.refdate_upload_outras_bases)
 
         if check_debentures_anbima == 'ok':
-            self.window_status_outras_bases.text_box.insert("end", f"  Upload: OK.\n\n")
+            self.window_status_outras_bases.text_box.insert("end", "  Upload: OK.\n\n")
         elif check_debentures_anbima == 'Já baixado anteriormente':
-            self.window_status_outras_bases.text_box.insert("end", f"  Já baixado anteriormente.\n\n")
+            self.window_status_outras_bases.text_box.insert("end", "  Já baixado anteriormente.\n\n")
         else:
             self.window_status_outras_bases.text_box.insert("end", f"  Erro: {check_debentures_anbima}\n\n")
 
     def upload_curvasB3(self):
 
-        self.window_status_outras_bases.text_box.insert("end", f"Rodando: Curvas B3.\n")
+        self.window_status_outras_bases.text_box.insert("end", "Rodando: Curvas B3.\n")
 
         check_cruvas_b3 = self.curvasb3.run(refdate=self.refdate_upload_outras_bases, p_webdriver=self.driver)
 
         if check_cruvas_b3 == 'all_uploaded':
-            self.window_status_outras_bases.text_box.insert("end", f"  Já baixado anteriormente.\n\n")
+            self.window_status_outras_bases.text_box.insert("end", "  Já baixado anteriormente.\n\n")
         else:
             for dado in check_cruvas_b3:
                 self.window_status_outras_bases.text_box.insert("end", f"  Curva: {dado}: {check_cruvas_b3[dado]}.\n")
-            self.window_status_outras_bases.text_box.insert("end", f"\n")
+            self.window_status_outras_bases.text_box.insert("end", "\n")
 
     def captura_cdi_selic_b3(self):
 
@@ -840,14 +841,16 @@ class ProcessManager:
                 valor_cdi_dia_dmenos1 = self.manager_sql.select_dataframe(
                     f"SELECT VALOR_DIA FROM {self.tb_indexadores} WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'CDI'")['VALOR_DIA'][0]
                 cota_cdi_dmenos1 = self.manager_sql.select_dataframe(
-                    f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'CDI'")['COTA_INDEXADOR'][0]
+                    f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} "
+                    f"WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'CDI'")['COTA_INDEXADOR'][0]
                 valor_cdi_ano_dmenos1 = self.manager_sql.select_dataframe(
                     f"SELECT VALOR_ANO FROM {self.tb_indexadores} WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'CDI'")['VALOR_ANO'][0]
 
                 valor_selic_dia_dmenos1 = self.manager_sql.select_dataframe(
                     f"SELECT VALOR_DIA FROM {self.tb_indexadores} WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'SELIC'")['VALOR_DIA'][0]
                 cota_selic_dmenos1 = self.manager_sql.select_dataframe(
-                    f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'SELIC'")['COTA_INDEXADOR'][0]
+                    f"SELECT COTA_INDEXADOR FROM {self.tb_indexadores} "
+                    f"WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'SELIC'")['COTA_INDEXADOR'][0]
                 valor_selic_ano_dmenos1 = self.manager_sql.select_dataframe(
                     f"SELECT VALOR_ANO FROM {self.tb_indexadores} WHERE REFDATE = '{dmenos1}' AND INDEXADOR = 'SELIC'")['VALOR_ANO'][0]
 
@@ -860,7 +863,7 @@ class ProcessManager:
                     "VALOR_ANO": [valor_cdi_ano_dmenos1, valor_selic_ano_dmenos1],
                     "VALOR_DIA": [valor_cdi_dia_dmenos1, valor_selic_dia_dmenos1],
                     "COTA_INDEXADOR": [cota_cdi_d0_temp, cota_selic_d0_temp]
-                    }
+                }
 
                 self.manager_sql.insert_dataframe(pd.DataFrame(data), self.tb_indexadores)
 
@@ -868,7 +871,7 @@ class ProcessManager:
             else:
                 return False
 
-        self.window_status_outras_bases.text_box.insert("end", f"Captura CDI & SELIC B3\n")
+        self.window_status_outras_bases.text_box.insert("end", "Captura CDI & SELIC B3\n")
 
         check_if_temp()
 
@@ -877,7 +880,7 @@ class ProcessManager:
             p_webdriver=self.driver)
 
         if result == 'all_uploaded':
-            self.window_status_outras_bases.text_box.insert("end", f"  Já baixados anteriormente.\n\n")
+            self.window_status_outras_bases.text_box.insert("end", "  Já baixados anteriormente.\n\n")
         else:
             for dado in result:
                 self.window_status_outras_bases.text_box.insert("end", f"  {dado}: {result[dado]}\n")
@@ -885,21 +888,21 @@ class ProcessManager:
             if self.manager_sql.check_if_data_exists(
                     f"SELECT * FROM TB_INDEXADORES WHERE REFDATE = '{self.refdate_upload_outras_bases}' AND INDEXADOR = 'CDI'"):
                 self.manager_sql.update_table(
-                    table_name = "TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS",
-                    column_with_data_to_update = "STATUS = '1'",
-                    column_with_condition = f"PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")
+                    table_name="TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS",
+                    column_with_data_to_update="STATUS = '1'",
+                    column_with_condition=f"PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")
 
             if check_if_need_temp():
-                self.window_status_outras_bases.text_box.insert("end", f"  Upload CDI e SELIC temporários.\n")
+                self.window_status_outras_bases.text_box.insert("end", "  Upload CDI e SELIC temporários.\n")
 
-            self.window_status_outras_bases.text_box.insert("end", f"\n")
+            self.window_status_outras_bases.text_box.insert("end", "\n")
 
     def check_if_need_upload_bases_b3(self):
 
         self.curvasb3.set_refdate(self.refdate_upload_outras_bases)
         self.dadosB3.set_refdate(self.refdate_upload_outras_bases)
 
-        if self.curvasb3.check_sql_uploaded() != True or self.dadosB3.check_sql_uploaded() != True:
+        if self.curvasb3.check_sql_uploaded() is not True or self.dadosB3.check_sql_uploaded() is not True:
             return True
         else:
             return False
@@ -915,7 +918,7 @@ class ProcessManager:
 
             self.refdate_upload_outras_bases = datetime.strptime(self.app.entry_refdate_outras_bases.entry.get(), "%d/%m/%Y").date()
 
-            self.window_status_outras_bases.text_box.insert("end", f"Inicio processos - Upload outras bases\n\n")
+            self.window_status_outras_bases.text_box.insert("end", "Inicio processos - Upload outras bases\n\n")
 
             if self.app.opt_check_btn_anbima_debentures.get():
                 self.upload_anbima_debentures()
@@ -929,7 +932,6 @@ class ProcessManager:
                 else:
                     self.driver = None
 
-
                 if self.driver is not None:
 
                     if self.app.opt_check_btn_curvas_b3.get():
@@ -942,9 +944,9 @@ class ProcessManager:
                         self.driver.quit()
 
                 else:
-                    self.window_status_outras_bases.text_box.insert("end", f"Driver web falhou.\n")
+                    self.window_status_outras_bases.text_box.insert("end", "Driver web falhou.\n")
 
-            self.window_status_outras_bases.text_box.insert("end", f"Processos finalizados.\n")
+            self.window_status_outras_bases.text_box.insert("end", "Processos finalizados.\n")
             self.window_status_outras_bases.status_running = False
             self.window_status_outras_bases.ajusta_tamanho()
             self.call_status_all_bases()
@@ -961,14 +963,15 @@ class ProcessManager:
 
                 self.window_status_bases_carteiras.geometry("400x550")
 
-                self.refdate_upload_bases_carteiras = datetime.strptime(self.app.entry_refdate_bases_carteiras.entry.get(), "%d/%m/%Y").date()
+                self.refdate_upload_bases_carteiras = datetime.strptime(
+                    self.app.entry_refdate_bases_carteiras.entry.get(), "%d/%m/%Y").date()
 
                 self.dict_status_carteiras_bases_btg = self.manager_sql.select_dataframe(
                     f"SELECT FUNDO, STATUS_CARTEIRA FROM TB_BASE_BTG_STATUS_CARTEIRAS "
                     f"WHERE DATA_COTA = '{self.funcoes_pytools.convert_data_sql(self.refdate_upload_bases_carteiras)}'")\
                     .set_index('FUNDO').to_dict()['STATUS_CARTEIRA']
 
-                self.window_status_bases_carteiras.text_box.insert("end", f"Inicio processos - Bases BTG\n\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "Inicio processos - Bases BTG\n\n")
 
                 if self.app.opt_check_btn_captura_arquivos_email.get():
                     self.runCapturaArquivosEmail()
@@ -992,26 +995,27 @@ class ProcessManager:
                 if self.app.opt_check_btn_funds_adm_cotistas.get():
                     self.btgFundsAdmCotistas()
 
-                self.window_status_bases_carteiras.text_box.insert("end", f"Processos finalizados.\n")
+                self.window_status_bases_carteiras.text_box.insert("end", "Processos finalizados.\n")
                 self.window_status_bases_carteiras.status_running = False
                 self.window_status_bases_carteiras.ajusta_tamanho()
                 self.call_status_all_bases()
                 self.window_status_bases_carteiras.lift()
 
     def open_excel_control_panel(self):
-        os.startfile(
-            f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Backoffice - Control Panel.xlsm")
+        os.startfile(  # noqa: F403, F405, E402
+            f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Backoffice - Control Panel.xlsm")  # noqa: F403, F405
         self.call_status_all_bases()
 
     def open_excel_carteira_fundos(self):
-        os.startfile(
-            f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Backoffice - Carteira Fundos.xlsm")
+        os.startfile(  # noqa: F403, F405, E402
+            f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Backoffice - Carteira Fundos.xlsm")  # noqa: F403, F405
         self.call_status_all_bases()
 
     def open_excel_upload_curvas_bbg(self):
-        os.startfile(
-            f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Backoffice - Upload Curvas BBG.xlsm")
+        os.startfile(  # noqa: F403, F405, E402
+            f"C:\\Users\\{str_user}\\Strix Capital\\Backoffice - General\\Processos\\Backoffice - Upload Curvas BBG.xlsm")  # noqa: F405
         self.call_status_all_bases()
+
 
 class AutoProcessManager():
 
@@ -1033,7 +1037,7 @@ class AutoProcessManager():
 
         def check_close():
             self.need_to_close = True
-            if self.status_btg_status_carteiras_running == False and self.status_btg_status_bases_btg_running == False:
+            if self.status_btg_status_carteiras_running is False and self.status_btg_status_bases_btg_running is False:
                 if self.status_bases_ready_to_close and self.status_carteiras_ready_to_close:
                     self.window_status_loop_btg.destroy()
             else:
@@ -1048,17 +1052,17 @@ class AutoProcessManager():
             self.interval_loop_btg_status_carteiras = newStringVar(value=5)
 
             frame_status_carteiras = newLabelFrame(self.frame_loop_btg_body, text="Status Carteiras")
-            frame_status_carteiras.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10,0))
+            frame_status_carteiras.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
             frame_status_carteiras.columnconfigure(0, weight=1)
             frame_status_carteiras.rowconfigure(1, weight=1)
 
             frame_controle_status_carteiras = newFrame(frame_status_carteiras)
-            frame_controle_status_carteiras.grid(row=0, column=0, sticky="w", padx=5, pady=(5,0))
+            frame_controle_status_carteiras.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
 
             btn_run_status_carteiras = newButton(
                 frame_controle_status_carteiras, text="Executar", bootstyle="secondary", command=comando_btn_status_carteiras)
 
-            btn_run_status_carteiras.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(5,5))
+            btn_run_status_carteiras.grid(row=0, column=0, sticky="w", padx=(5, 0), pady=(5, 5))
 
             self.entry_tempo_status_carteiras = newSpinBox(
                 frame_controle_status_carteiras,
@@ -1067,10 +1071,10 @@ class AutoProcessManager():
             self.entry_tempo_status_carteiras.set_secondary()
             self.entry_tempo_status_carteiras.set_values([1, 5, 10, 15, 20, 30])
 
-            self.entry_tempo_status_carteiras.grid(row=0, column=1, sticky="w", padx=(5,0), pady=(5,5))
+            self.entry_tempo_status_carteiras.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=(5, 5))
 
             frame_txt_status_carteiras = newFrame(frame_status_carteiras)
-            frame_txt_status_carteiras.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0,5))
+            frame_txt_status_carteiras.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0, 5))
             frame_txt_status_carteiras.columnconfigure(0, weight=1)
             frame_txt_status_carteiras.rowconfigure(0, weight=1)
 
@@ -1085,28 +1089,28 @@ class AutoProcessManager():
             self.interval_loop_btg_status_bases_btg = newStringVar(value=5)
 
             frame_status_bases_btg = newLabelFrame(self.frame_loop_btg_body, text="Status Bases BTG")
-            frame_status_bases_btg.grid(row=1, column=0, sticky="nsew", padx=10, pady=(10,10))
+            frame_status_bases_btg.grid(row=1, column=0, sticky="nsew", padx=10, pady=(10, 10))
             frame_status_bases_btg.columnconfigure(0, weight=1)
             frame_status_bases_btg.rowconfigure(1, weight=1)
 
             frame_controle_status_bases_btg = newFrame(frame_status_bases_btg)
-            frame_controle_status_bases_btg.grid(row=0, column=0, sticky="w", padx=5, pady=(5,0))
+            frame_controle_status_bases_btg.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 0))
 
             btn_run_status_bases_btg = newButton(
                 frame_controle_status_bases_btg, text="Executar", bootstyle="secondary", command=comando_btn_status_bases_btg)
 
-            btn_run_status_bases_btg.grid(row=0, column=0, sticky="w", padx=(5,0), pady=(5,5))
+            btn_run_status_bases_btg.grid(row=0, column=0, sticky="w", padx=(5, 0), pady=(5, 5))
 
             self.entry_tempo_status_bases_btg = newSpinBox(
-                frame_controle_status_bases_btg, 
+                frame_controle_status_bases_btg,
                 textvariable=self.interval_loop_btg_status_bases_btg)
             self.entry_tempo_status_bases_btg.set_secondary()
             self.entry_tempo_status_bases_btg.set_values([1, 5, 10, 15, 20, 30])
 
-            self.entry_tempo_status_bases_btg.grid(row=0, column=1, sticky="w", padx=(5,0), pady=(5,5))
+            self.entry_tempo_status_bases_btg.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=(5, 5))
 
             frame_txt_status_bases_btg = newFrame(frame_status_bases_btg)
-            frame_txt_status_bases_btg.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0,5))
+            frame_txt_status_bases_btg.grid(row=1, column=0, sticky="nsew", padx=5, pady=(0, 5))
             frame_txt_status_bases_btg.columnconfigure(0, weight=1)
             frame_txt_status_bases_btg.rowconfigure(0, weight=1)
 
@@ -1150,9 +1154,9 @@ class AutoProcessManager():
             while i <= total:
                 if self.need_to_close:
                     self.txt_box_status_carteiras.delete("1.0", "end")
-                    self.txt_box_status_carteiras.insert("end", f"\nPronto para fechar.")
+                    self.txt_box_status_carteiras.insert("end", "\nPronto para fechar.")
                     return False
-                elif self.controle_loop_status_carteiras_btg == True:
+                elif self.controle_loop_status_carteiras_btg is True:
                     sleep(1)
                     i += 1
                 elif self.controle_loop_status_carteiras_btg == 'restart':
@@ -1165,16 +1169,16 @@ class AutoProcessManager():
             check_liberados = True
 
             self.txt_box_status_carteiras.delete("1.0", "end")
-            self.txt_box_status_carteiras.insert("end", f"Rodando: Status Carteiras BTG...\n")
+            self.txt_box_status_carteiras.insert("end", "Rodando: Status Carteiras BTG...\n")
             results = self.manager_btg.funds_status_carteiras(refdate=self.app.refdate)
             self.txt_box_status_carteiras.delete("1.0", "end")
 
             if results['insert'] == 'Sem registros.':
-                self.txt_box_status_carteiras.insert("end", f"No records.\n")
+                self.txt_box_status_carteiras.insert("end", "No records.\n")
             elif results['insert'] == 'Erro do tratamento dados.':
-                self.txt_box_status_carteiras.insert("end", f"Erro no tratamento dos dados.\n")
+                self.txt_box_status_carteiras.insert("end", "Erro no tratamento dos dados.\n")
             elif results['insert'] == 'Erro do get_data.':
-                self.txt_box_status_carteiras.insert("end", f"Erro do get_data da API.\n")
+                self.txt_box_status_carteiras.insert("end", "Erro do get_data da API.\n")
             elif results['insert'] == 'ok':
                 df = self.manager_sql.select_dataframe(
                     f"SELECT FUNDO, STATUS_CARTEIRA FROM TB_BASE_BTG_STATUS_CARTEIRAS "
@@ -1186,7 +1190,7 @@ class AutoProcessManager():
                         check_liberados = False
                     self.txt_box_status_carteiras.insert("end", f"{fundo}: {results_df[fundo]}\n")
             else:
-                self.txt_box_status_carteiras.insert("end", f"Erro desconhecido.\n")
+                self.txt_box_status_carteiras.insert("end", "Erro desconhecido.\n")
                 check_liberados = False
 
             return check_liberados
@@ -1194,9 +1198,9 @@ class AutoProcessManager():
         while True:
             self.status_btg_status_carteiras_running = True
 
-            if btgFundsStatusCarteiras() == True:
+            if btgFundsStatusCarteiras() is True:
                 self.txt_box_status_carteiras.delete("1.0", "end")
-                self.txt_box_status_carteiras.insert("end", f"\n\nTodos os fundos estão liberados.\n")
+                self.txt_box_status_carteiras.insert("end", "\n\nTodos os fundos estão liberados.\n")
                 self.status_btg_status_carteiras_running = False
                 self.status_carteiras_ready_to_close = True
                 break
@@ -1209,7 +1213,7 @@ class AutoProcessManager():
 
             self.status_btg_status_carteiras_running = False
 
-            if loop_waiting() == False:
+            if loop_waiting() is False:
                 self.status_carteiras_ready_to_close = True
                 break
 
@@ -1231,12 +1235,12 @@ class AutoProcessManager():
             if len(check_list) > 0:
 
                 if ENVIRONMENT == "DEVELOPMENT":
-                    to_list = [os.getenv("EMAIL_ME")]
+                    to_list = [os.getenv("EMAIL_ME")]  # noqa: F403, F405, E402
                 else:
-                    to_list = [os.getenv("EMAIL_BO")]
+                    to_list = [os.getenv("EMAIL_BO")]  # noqa: F403, F405, E402
 
                 subject = f"Nova Movimentação Cotistas - {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
-                sedbehalf = os.getenv("EMAIL_ROBO")
+                sedbehalf = os.getenv("EMAIL_ROBO")  # noqa: F403, F405, E402
 
                 df_movs_cotistas = self.manager_sql.select_dataframe(
                     f"SELECT * FROM TB_BASE_BTG_MOVIMENTACAO_PASSIVO WHERE DATA_OPERACAO = '{self.app.refdate.strftime('%Y-%m-%d')}'")
@@ -1259,7 +1263,7 @@ class AutoProcessManager():
                             f"Data Operação: {row['DATA_OPERACAO']}\n"
                             f"Data Cotização: {row['DATA_COTIZACAO']}\n"
                             f"Data Liquidação: {row['DATA_IMPACTO']}\n\n\n"
-                            )
+                        )
 
                         self.app.manager_outlook.send_email(
                             to_list=to_list, subject=subject, msg_body=str_body, sendBehalf=sedbehalf)
@@ -1270,9 +1274,9 @@ class AutoProcessManager():
             while i <= total:
                 if self.need_to_close:
                     self.txt_box_status_bases_btg.delete("1.0", "end")
-                    self.txt_box_status_bases_btg.insert("end", f"\nPronto para fechar.")
+                    self.txt_box_status_bases_btg.insert("end", "\nPronto para fechar.")
                     return False
-                elif self.controle_loop_bases_btg == True:
+                elif self.controle_loop_bases_btg is True:
                     sleep(1)
                     i += 1
                 elif self.controle_loop_bases_btg == 'restart':
@@ -1282,7 +1286,7 @@ class AutoProcessManager():
 
         def btgFundsExtratoCC():
 
-            self.txt_box_status_bases_btg.insert("end", f"Extrato CC Funds:\n")
+            self.txt_box_status_bases_btg.insert("end", "Extrato CC Funds:\n")
 
             results = self.manager_btg.funds_extrato_cc(refdate=self.app.refdate)
 
@@ -1294,7 +1298,7 @@ class AutoProcessManager():
 
         def btgFundsMovCotistas():
 
-            self.txt_box_status_bases_btg.insert("end", f"Movimentações Cotistas\n")
+            self.txt_box_status_bases_btg.insert("end", "Movimentações Cotistas\n")
 
             results = self.manager_btg.funds_movimentacao_cotistas(refdate=self.app.refdate)
 
@@ -1310,7 +1314,7 @@ class AutoProcessManager():
             self.txt_box_status_bases_btg.delete("1.0", "end")
 
             btgFundsExtratoCC()
-            self.txt_box_status_bases_btg.insert("end", f"\n")
+            self.txt_box_status_bases_btg.insert("end", "\n")
             btgFundsMovCotistas()
             emailNewMovCotistas()
 
@@ -1321,9 +1325,10 @@ class AutoProcessManager():
             self.txt_box_status_bases_btg.insert("end", f"next run: {next_run.strftime('%H:%M:%S')}")
 
             self.status_btg_status_bases_btg_running = False
-            if loop_waiting() == False:
+            if loop_waiting() is False:
                 self.status_bases_ready_to_close = True
                 break
+
 
 class App(Window):
 
@@ -1359,7 +1364,7 @@ class App(Window):
         self.manager_btg = BTGReports(sql_manager=self.manager_sql, funcoes_pytools=self.funcoes_pytools, logger=self.logger)
 
         if ENVIRONMENT != "DEVELOPMENT":
-            self.manager_btg.connect(user_id=os.getenv("USER_BTG_FAAS"), user_pass=os.getenv("PASS_BTG_FAAS_PROD"))
+            self.manager_btg.connect(user_id=os.getenv("USER_BTG_FAAS"), user_pass=os.getenv("PASS_BTG_FAAS_PROD"))  # noqa: F403, F405
         elif ENVIRONMENT == "DEVELOPMENT" and CONNECT_MANAGER_BTG:
             self.manager_btg.connect()
 
@@ -1380,8 +1385,8 @@ class App(Window):
     def on_close(self):
         if self.running_processos_manuaus_bases:
             if Messagebox.yesno(
-                title="Encerrar App", message="Existem processos em execução.\n\nDeseja encerrar o aplicativo mesmo assim?"):
-                sys.exit()
+                    title="Encerrar App", message="Existem processos em execução.\n\nDeseja encerrar o aplicativo mesmo assim?"):
+                sys.exit()  # noqa: F403, F405, E402
         else:
             self.destroy()
 
@@ -1395,7 +1400,7 @@ class App(Window):
 
             self.menu_refdate = newMenuButton(self.frame_menu, text='Refdate', bootstyle="light")
             self.menu_refdate.grid(row=0, column=0, padx=0, pady=0)
-            
+
             self.menu_change_refdate = newMenu(self.menu_refdate, tearoff=0)
             self.menu_refdate['menu'] = self.menu_change_refdate
             self.menu_change_refdate.add_command(label='Select refdate', command=self.change_refdate)
@@ -1406,7 +1411,7 @@ class App(Window):
 
             self.menu_log = newMenuButton(self.frame_menu, text='Log', bootstyle="light")
             self.menu_log.grid(row=0, column=1, padx=0, pady=0)
-            
+
             self.menu_check_log = newMenu(self.menu_log, tearoff=0)
             self.menu_log['menu'] = self.menu_check_log
             self.menu_check_log.add_command(label='Check Logs', command=self.open_check_logs)
@@ -1415,14 +1420,14 @@ class App(Window):
 
             def comando_get_token():
                 self.process_manager.janelaToken()
-            
+
             def comando_tela_cadastro():
                 self.sistema_cadastro = TelaCadastro(
-                    self, manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools, logger=self.logger)
+                    self, manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools)
 
             self.menu_ferramentas = newMenuButton(self.frame_menu, text='Ferramentas', bootstyle="light")
             self.menu_ferramentas.grid(row=0, column=2, padx=0, pady=0)
-            
+
             self.menu_ferramentas_menu = newMenu(self.menu_ferramentas, tearoff=0)
             self.menu_ferramentas['menu'] = self.menu_ferramentas_menu
             self.menu_ferramentas_menu.add_command(label='Cadastro Ativos', command=comando_tela_cadastro)
@@ -1474,7 +1479,7 @@ class App(Window):
 
             def comando_minty():
                 self.style.theme_use('minty')
-            
+
             def comando_pulse():
                 self.style.theme_use('pulse')
 
@@ -1521,7 +1526,7 @@ class App(Window):
 
             def comando_versao_app():
 
-                file_name = os.path.basename(__file__)
+                file_name = os.path.basename(__file__)  # noqa: F403, F405, E402
 
                 Messagebox.show_info(
                     title="Info App",
@@ -1530,7 +1535,7 @@ class App(Window):
 
             self.menu_info = newMenuButton(self.frame_menu, text='Info', bootstyle="light")
             self.menu_info.grid(row=0, column=4, padx=0, pady=0)
-            
+
             self.menu_info_menu = newMenu(self.menu_info, tearoff=0)
             self.menu_info['menu'] = self.menu_info_menu
             self.menu_info_menu.add_command(label='Versão App', command=comando_versao_app)
@@ -1557,7 +1562,7 @@ class App(Window):
         self.frame_menu.grid(row=0, column=0, sticky="ew")
 
         self.frame_top = newFrame(self.frame_app)
-        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10,0))
+        self.frame_top.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
         self.frame_top.columnconfigure(0, weight=1)
 
         newLabelTitle(self.frame_top, text=f"{ENVIRONMENT if ENVIRONMENT == "DEVELOPMENT" else 'Control Panel - Backoffice'}")\
@@ -1594,7 +1599,7 @@ class App(Window):
             self.check_logs_filter_lvl_debug = newBooleanVar(value=False)
 
             frame_check_logs_top = newLabelFrame(self.window_check_logs, text='Pré Filtros')
-            frame_check_logs_top.grid(row=0, column=0, sticky="ew", padx=10, pady=(10,0))
+            frame_check_logs_top.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 0))
 
             frame_check_logs_body = newFrame(self.window_check_logs)
             frame_check_logs_body.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
@@ -1602,32 +1607,32 @@ class App(Window):
             frame_check_logs_body.rowconfigure(0, weight=1)
 
             self.entry_check_logs_filter_refdate = newDateEntry(frame_check_logs_top, bootstyle="secondary", startdate=self.refdate)
-            self.entry_check_logs_filter_refdate.grid(row=0, column=0, sticky="w", padx=(10,0), pady=(5,5))
+            self.entry_check_logs_filter_refdate.grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(5, 5))
 
             self.btn_check_logs_filter_execute = newButton(frame_check_logs_top, text="Execute", command=lambda: check_logs_execute())
-            self.btn_check_logs_filter_execute.grid(row=0, column=1, sticky="w", padx=(10,10), pady=(5,5))
+            self.btn_check_logs_filter_execute.grid(row=0, column=1, sticky="w", padx=(10, 10), pady=(5, 5))
 
             self.check_btn_check_logs_filter_lvl_info = newCheckButton(
                 frame_check_logs_top, text="INFO", variable=self.check_logs_filter_lvl_info)
 
-            self.check_btn_check_logs_filter_lvl_info.grid(row=0, column=2, sticky="w", padx=(10,0), pady=(5,5))
+            self.check_btn_check_logs_filter_lvl_info.grid(row=0, column=2, sticky="w", padx=(10, 0), pady=(5, 5))
 
             self.check_btn_check_logs_filter_lvl_error = newCheckButton(
                 frame_check_logs_top, text="ERROR", variable=self.check_logs_filter_lvl_error)
 
-            self.check_btn_check_logs_filter_lvl_error.grid(row=0, column=3, sticky="w", padx=(10,0), pady=(5,5))
+            self.check_btn_check_logs_filter_lvl_error.grid(row=0, column=3, sticky="w", padx=(10, 0), pady=(5, 5))
 
             self.check_btn_check_logs_filter_lvl_debug = newCheckButton(
                 frame_check_logs_top, text="DEBUG", variable=self.check_logs_filter_lvl_debug)
 
-            self.check_btn_check_logs_filter_lvl_debug.grid(row=0, column=4, sticky="w", padx=(10,0), pady=(5,5))
+            self.check_btn_check_logs_filter_lvl_debug.grid(row=0, column=4, sticky="w", padx=(10, 0), pady=(5, 5))
 
             self.tableview_check_logs = Tableview(
-                frame_check_logs_body, 
-                searchable=True, 
-                autofit=True, 
-                paginated=False, 
-                height=20, 
+                frame_check_logs_body,
+                searchable=True,
+                autofit=True,
+                paginated=False,
+                height=20,
                 coldata=['IndexLog', 'DateTimeRun', 'ScriptRun', 'ScriptMaster', 'LevelLog', 'Processo'])
 
             self.tableview_check_logs.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
@@ -1637,7 +1642,6 @@ class App(Window):
             month_str = datetime.strptime(self.entry_check_logs_filter_refdate.entry.get(), "%d/%m/%Y").month
             day_str = datetime.strptime(self.entry_check_logs_filter_refdate.entry.get(), "%d/%m/%Y").day
             year_str = datetime.strptime(self.entry_check_logs_filter_refdate.entry.get(), "%d/%m/%Y").year
-
 
             if self.check_logs_filter_lvl_info.get() \
                     and self.check_logs_filter_lvl_error.get() \
@@ -1684,12 +1688,12 @@ class App(Window):
         self.opt_check_btn_captura_arquivos_email = newBooleanVar(value=False)
 
         self.lista_opts_bases_carteiras = [
-            self.opt_check_btn_upload_arquivos_xml, 
-            self.opt_check_btn_funds_adm_cotistas, 
-            self.opt_check_btn_funds_perf_cotistas, 
-            self.opt_check_btn_funds_perf_nav, 
-            self.opt_check_btn_download_carteiras_btg, 
-            self.opt_check_btn_update_indexadores, 
+            self.opt_check_btn_upload_arquivos_xml,
+            self.opt_check_btn_funds_adm_cotistas,
+            self.opt_check_btn_funds_perf_cotistas,
+            self.opt_check_btn_funds_perf_nav,
+            self.opt_check_btn_download_carteiras_btg,
+            self.opt_check_btn_update_indexadores,
             self.opt_check_btn_captura_arquivos_email
         ]
 
@@ -1702,20 +1706,20 @@ class App(Window):
 
                 if not self.auto_process_manager.loop_carteiras_btg_oppened:
                     threading.Thread(
-                        target=self.auto_process_manager.loop_status_carteiras_btg, 
+                        target=self.auto_process_manager.loop_status_carteiras_btg,
                         name='processo_loop_btg_status_carteiras').start()
 
                 if not self.auto_process_manager.loop_bases_btg_oppened:
                     threading.Thread(
-                        target=self.auto_process_manager.loop_status_bases_btg, 
+                        target=self.auto_process_manager.loop_status_bases_btg,
                         name='processo_loop_btg_bases_btg').start()
 
             frame_processos_automatizados = newLabelFrame(self.frame_body, text="Processos Automatizados")
-            frame_processos_automatizados.grid(row=0, column=0, sticky='ns', padx=(10,0), pady=(10,0))
+            frame_processos_automatizados.grid(row=0, column=0, sticky='ns', padx=(10, 0), pady=(10, 0))
             frame_processos_automatizados.columnconfigure(0, weight=1)
 
             btn_loop_btg = newButton(frame_processos_automatizados, text="Loop BTG", bootstyle="secondary", command=run_loop_btg)
-            btn_loop_btg.grid(row=1, column=0, sticky="we", padx=(10,10), pady=(10,10))
+            btn_loop_btg.grid(row=1, column=0, sticky="we", padx=(10, 10), pady=(10, 10))
 
         def bases_carteiras():
 
@@ -1723,7 +1727,7 @@ class App(Window):
                 threading.Thread(target=self.process_manager.processos_bases_carterias, name='bases_carteiras').start()
 
             frame_bases_btg = newLabelFrame(self.frame_body, text="Bases Carteiras")
-            frame_bases_btg.grid(row=0, column=1, sticky="nsew", padx=(10,0), pady=(10,0))
+            frame_bases_btg.grid(row=0, column=1, sticky="nsew", padx=(10, 0), pady=(10, 0))
             frame_bases_btg.columnconfigure(0, weight=1)
 
             frame_top = newFrame(frame_bases_btg)
@@ -1733,33 +1737,33 @@ class App(Window):
             frame_check_box.grid(row=1, column=0, sticky="nsew")
 
             newButton(frame_top, text="Executar", command=lambda: run_bases_carteiras())\
-                .grid(row=0, column=0, sticky="w", padx=(10,0), pady=(10,10))
+                .grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(10, 10))
 
             self.entry_refdate_bases_carteiras = newDateEntry(
                 frame_top, bootstyle="secondary", startdate=self.funcoes_pytools.workday_br(self.refdate, -1))
 
-            self.entry_refdate_bases_carteiras.grid(row=0, column=1, sticky="w", padx=(10,10), pady=(10,10))
+            self.entry_refdate_bases_carteiras.grid(row=0, column=1, sticky="w", padx=(10, 10), pady=(10, 10))
 
             newCheckButton(frame_check_box, text="Upload arquivos XML", variable=self.opt_check_btn_upload_arquivos_xml)\
-                .grid(row=0, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
             newCheckButton(frame_check_box, text="Funds Perf Cotistas", variable=self.opt_check_btn_funds_perf_cotistas)\
-                .grid(row=0, column=1, sticky="w", padx=(10,10), pady=(0,10))
+                .grid(row=0, column=1, sticky="w", padx=(10, 10), pady=(0, 10))
 
             newCheckButton(frame_check_box, text="Funds Adm Cotistas", variable=self.opt_check_btn_funds_adm_cotistas)\
-                .grid(row=1, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=1, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
             newCheckButton(frame_check_box, text="Funds Perf NAV", variable=self.opt_check_btn_funds_perf_nav)\
-                .grid(row=1, column=1, sticky="w", padx=(10,10), pady=(0,10))
+                .grid(row=1, column=1, sticky="w", padx=(10, 10), pady=(0, 10))
 
             newCheckButton(frame_check_box, text="Update indexadores", variable=self.opt_check_btn_update_indexadores)\
-                .grid(row=2, column=1, sticky="w", padx=(10,10), pady=(0,10))
+                .grid(row=2, column=1, sticky="w", padx=(10, 10), pady=(0, 10))
 
             newCheckButton(frame_check_box, text="Arquivos Email", variable=self.opt_check_btn_captura_arquivos_email)\
-                .grid(row=2, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=2, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
             newCheckButton(frame_check_box, text="Donwload Carteiras BTG", variable=self.opt_check_btn_download_carteiras_btg)\
-                .grid(row=3, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=3, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
         def outras_bases():
 
@@ -1774,7 +1778,7 @@ class App(Window):
             self.opt_check_btn_cdi_selic_b3 = newBooleanVar(value=False)
 
             frame_outras_bases = newLabelFrame(self.frame_body, text="Upload Outras Bases")
-            frame_outras_bases.grid(row=0, column=2, sticky="nsew", padx=(10,0), pady=(10,0))
+            frame_outras_bases.grid(row=0, column=2, sticky="nsew", padx=(10, 0), pady=(10, 0))
             frame_outras_bases.columnconfigure(0, weight=1)
 
             frame_top = newFrame(frame_outras_bases)
@@ -1784,39 +1788,40 @@ class App(Window):
             frame_check_box.grid(row=1, column=0, sticky="nsew")
 
             newButton(frame_top, text="Executar", command=lambda: run_outras_bases())\
-                .grid(row=0, column=0, sticky="w", padx=(10,0), pady=(10,10))
+                .grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(10, 10))
 
             self.entry_refdate_outras_bases = newDateEntry(
                 frame_top, bootstyle="secondary", startdate=self.funcoes_pytools.workday_br(self.refdate, -1))
 
-            self.entry_refdate_outras_bases.grid(row=0, column=1, sticky="w", padx=(10,10), pady=(10,10))
+            self.entry_refdate_outras_bases.grid(row=0, column=1, sticky="w", padx=(10, 10), pady=(10, 10))
 
-            newCheckButton(frame_check_box, text="Anbima Debêntures", 
+            newCheckButton(frame_check_box, text="Anbima Debêntures",
                     variable=self.opt_check_btn_anbima_debentures)\
-                .grid(row=0, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
-            newCheckButton(frame_check_box, text="Curvas B3", 
+            newCheckButton(frame_check_box, text="Curvas B3",
                     variable=self.opt_check_btn_curvas_b3)\
-                .grid(row=1, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=1, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
-            newCheckButton(frame_check_box, text="CDI & Selic B3", 
+            newCheckButton(frame_check_box, text="CDI & Selic B3",
                     variable=self.opt_check_btn_cdi_selic_b3)\
-                .grid(row=2, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                .grid(row=2, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
         def open_excell():
 
             self.frame_planilhas_excel = newLabelFrame(self.frame_body, text="Processos Planilhas")
-            self.frame_planilhas_excel.grid(row=1, column=0, sticky="nsew", padx=(10,0), pady=(10,0))
+            self.frame_planilhas_excel.grid(row=1, column=0, sticky="nsew", padx=(10, 0), pady=(10, 0))
             self.frame_planilhas_excel.columnconfigure(0, weight=1)
 
             newButton(self.frame_planilhas_excel, text="Control Panel", command=lambda: self.process_manager.open_excel_control_panel())\
-                .grid(row=0, column=0, sticky="we", padx=(10,10), pady=(10,0))
+                .grid(row=0, column=0, sticky="we", padx=(10, 10), pady=(10, 0))
 
-            newButton(self.frame_planilhas_excel, text="Carteiras Fundos", command=lambda: self.process_manager.open_excel_carteira_fundos())\
-                .grid(row=1, column=0, sticky="we", padx=(10,10), pady=(10,0))
+            newButton(self.frame_planilhas_excel, text="Carteiras Fundos",
+                      command=lambda: self.process_manager.open_excel_carteira_fundos())\
+                .grid(row=1, column=0, sticky="we", padx=(10, 10), pady=(10, 0))
 
             newButton(self.frame_planilhas_excel, text="Curvas BBG", command=lambda: self.process_manager.open_excel_upload_curvas_bbg())\
-                .grid(row=2, column=0, sticky="we", padx=(10,10), pady=(10,10))
+                .grid(row=2, column=0, sticky="we", padx=(10, 10), pady=(10, 10))
 
         def calculadora_ativos():
 
@@ -1838,23 +1843,24 @@ class App(Window):
                 self.txt_status_calculadora_carteira_yield_master = newStringVar(value="❌ Cota Yield Master")
 
                 self.lbl_calculadora_ativos_di1fut = newLabelStatus(frame_check_box, textvariable=self.txt_status_calculadora_curva_di1fut)
-                self.lbl_calculadora_ativos_di1fut.grid(row=0, column=0, sticky="w", padx=(10,0), pady=(10,0))
+                self.lbl_calculadora_ativos_di1fut.grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(10, 0))
 
-                self.lbl_calculadora_ativos_anbima_debs = newLabelStatus(frame_check_box, textvariable=self.txt_status_calculadora_anbima_debs)
-                self.lbl_calculadora_ativos_anbima_debs.grid(row=1, column=0, sticky="w", padx=(10,0), pady=(0,0))
+                self.lbl_calculadora_ativos_anbima_debs = newLabelStatus(
+                    frame_check_box, textvariable=self.txt_status_calculadora_anbima_debs)
+                self.lbl_calculadora_ativos_anbima_debs.grid(row=1, column=0, sticky="w", padx=(10, 0), pady=(0, 0))
 
                 self.lbl_calculadora_ativos_yield_master = newLabelStatus(
                     frame_check_box, textvariable=self.txt_status_calculadora_carteira_yield_master)
-                self.lbl_calculadora_ativos_yield_master.grid(row=2, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                self.lbl_calculadora_ativos_yield_master.grid(row=2, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
                 self.lbl_calculadora_ativos_cdi = newLabelStatus(frame_check_box, textvariable=self.txt_status_calculadora_cdi)
-                self.lbl_calculadora_ativos_cdi.grid(row=0, column=1, sticky="w", padx=(5,10), pady=(10,0))
+                self.lbl_calculadora_ativos_cdi.grid(row=0, column=1, sticky="w", padx=(5, 10), pady=(10, 0))
 
                 self.lbl_calculadora_ativos_selic = newLabelStatus(frame_check_box, textvariable=self.txt_status_calculadora_selic)
-                self.lbl_calculadora_ativos_selic.grid(row=1, column=1, sticky="w", padx=(5,10), pady=(0,0))
+                self.lbl_calculadora_ativos_selic.grid(row=1, column=1, sticky="w", padx=(5, 10), pady=(0, 0))
 
             frame_calculadora_ativos = newLabelFrame(self.frame_body, text="Calculadora Ativos")
-            frame_calculadora_ativos.grid(row=1, column=1, sticky="nsew", padx=(10,0), pady=(10,0))
+            frame_calculadora_ativos.grid(row=1, column=1, sticky="nsew", padx=(10, 0), pady=(10, 0))
             frame_calculadora_ativos.columnconfigure(0, weight=1)
 
             frame_top = newFrame(frame_calculadora_ativos)
@@ -1864,7 +1870,7 @@ class App(Window):
             self.entry_refdate_calculadora = newDateEntry(
                 frame_top, startdate=self.funcoes_pytools.workday_br(self.refdate, -1))
 
-            self.entry_refdate_calculadora.grid(row=0, column=0, sticky="nwe", padx=(10,10), pady=(10,0))
+            self.entry_refdate_calculadora.grid(row=0, column=0, sticky="nwe", padx=(10, 10), pady=(10, 0))
 
             frame_botoes = newFrame(frame_top)
             frame_botoes.grid(row=1, column=0, sticky="ew")
@@ -1872,13 +1878,13 @@ class App(Window):
             frame_botoes.columnconfigure(1, weight=1)
 
             btn_run_check_bases = newButton(frame_botoes, text="Check Bases", command=lambda: self.process_manager.call_status_all_bases())
-            btn_run_check_bases.grid(row=0, column=0, sticky="we", padx=(10,0), pady=(10,10))
+            btn_run_check_bases.grid(row=0, column=0, sticky="we", padx=(10, 0), pady=(10, 10))
 
             btn_run_calculadora = newButton(frame_botoes, text="  Executar  ", command=run_calculadora_ativos)
-            btn_run_calculadora.grid(row=0, column=1, sticky="we", padx=(10,10), pady=(10,10))
+            btn_run_calculadora.grid(row=0, column=1, sticky="we", padx=(10, 10), pady=(10, 10))
 
             btn_run_reconciliacao = newButton(frame_botoes, text="Recon", command=lambda: self.process_manager.recon_calculadora_ativos())
-            btn_run_reconciliacao.grid(row=1, column=0, sticky="we", padx=(10,10), pady=(0,0), columnspan=2)
+            btn_run_reconciliacao.grid(row=1, column=0, sticky="we", padx=(10, 10), pady=(0, 0), columnspan=2)
 
             frame_check_box = newFrame(frame_calculadora_ativos)
             frame_check_box.grid(row=1, column=0, sticky="we")
@@ -1902,40 +1908,41 @@ class App(Window):
                 self.txt_status_bases_anbima_debentures = newStringVar(value="❌ Anbima Debêntures")
 
                 self.lbl_status_bases_curvasb3 = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_curvas_b3)
-                self.lbl_status_bases_curvasb3.grid(row=0, column=0, sticky="w", padx=(10,0), pady=(5,0))
+                self.lbl_status_bases_curvasb3.grid(row=0, column=0, sticky="w", padx=(10, 0), pady=(5, 0))
 
-                self.lbl_status_bases_anbima_debentures = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_anbima_debentures)
-                self.lbl_status_bases_anbima_debentures.grid(row=1, column=0, sticky="w", padx=(10,0), pady=(0,0))
+                self.lbl_status_bases_anbima_debentures = newLabelStatus(
+                    frame_check_box, textvariable=self.txt_status_bases_anbima_debentures)
+                self.lbl_status_bases_anbima_debentures.grid(row=1, column=0, sticky="w", padx=(10, 0), pady=(0, 0))
 
                 self.lbl_status_bases_xml_carteiras = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_xml_carteiras)
-                self.lbl_status_bases_xml_carteiras.grid(row=2, column=0, sticky="w", padx=(10,0), pady=(0,0))
+                self.lbl_status_bases_xml_carteiras.grid(row=2, column=0, sticky="w", padx=(10, 0), pady=(0, 0))
 
                 self.lbl_status_bases_perf_nav = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_perf_nav)
-                self.lbl_status_bases_perf_nav.grid(row=3, column=0, sticky="w", padx=(10,0), pady=(0,0))
+                self.lbl_status_bases_perf_nav.grid(row=3, column=0, sticky="w", padx=(10, 0), pady=(0, 0))
 
                 self.lbl_status_bases_perf_cotistas = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_perf_cotistas)
-                self.lbl_status_bases_perf_cotistas.grid(row=4, column=0, sticky="w", padx=(10,0), pady=(0,0))
+                self.lbl_status_bases_perf_cotistas.grid(row=4, column=0, sticky="w", padx=(10, 0), pady=(0, 0))
 
                 self.lbl_status_bases_adm_cotistas = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_adm_cotistas)
-                self.lbl_status_bases_adm_cotistas.grid(row=5, column=0, sticky="w", padx=(10,0), pady=(0,10))
+                self.lbl_status_bases_adm_cotistas.grid(row=5, column=0, sticky="w", padx=(10, 0), pady=(0, 10))
 
                 self.lbl_status_bases_imabjust = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_imabjust)
-                self.lbl_status_bases_imabjust.grid(row=0, column=1, sticky="w", padx=(5,10), pady=(5,0))
+                self.lbl_status_bases_imabjust.grid(row=0, column=1, sticky="w", padx=(5, 10), pady=(5, 0))
 
                 self.lbl_status_bases_imab = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_imab)
-                self.lbl_status_bases_imab.grid(row=1, column=1, sticky="w", padx=(5,10), pady=(0,0))
+                self.lbl_status_bases_imab.grid(row=1, column=1, sticky="w", padx=(5, 10), pady=(0, 0))
 
                 self.lbl_status_bases_cdi = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_cdi)
-                self.lbl_status_bases_cdi.grid(row=2, column=1, sticky="w", padx=(5,10), pady=(0,0))
+                self.lbl_status_bases_cdi.grid(row=2, column=1, sticky="w", padx=(5, 10), pady=(0, 0))
 
                 self.lbl_status_bases_selic = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_selic)
-                self.lbl_status_bases_selic.grid(row=3, column=1, sticky="w", padx=(5,10), pady=(0,0))
+                self.lbl_status_bases_selic.grid(row=3, column=1, sticky="w", padx=(5, 10), pady=(0, 0))
 
                 self.lbl_status_bases_calculadora = newLabelStatus(frame_check_box, textvariable=self.txt_status_bases_calculadora)
-                self.lbl_status_bases_calculadora.grid(row=4, column=1, sticky="w", padx=(5,10), pady=(0,0))
+                self.lbl_status_bases_calculadora.grid(row=4, column=1, sticky="w", padx=(5, 10), pady=(0, 0))
 
             frame_status_bases = newLabelFrame(self.frame_body, text="Status Bases")
-            frame_status_bases.grid(row=1, column=2, sticky="nsew", padx=(10,0), pady=(10,0))
+            frame_status_bases.grid(row=1, column=2, sticky="nsew", padx=(10, 0), pady=(10, 0))
             frame_status_bases.columnconfigure(0, weight=1)
 
             frame_top = newFrame(frame_status_bases)
@@ -1947,11 +1954,11 @@ class App(Window):
             self.entry_refdate_status_bases = newDateEntry(
                 frame_top, startdate=self.funcoes_pytools.workday_br(self.refdate, -1))
 
-            self.entry_refdate_status_bases.grid(row=0, column=1, sticky="nw", padx=(10,10), pady=(10,0))
+            self.entry_refdate_status_bases.grid(row=0, column=1, sticky="nw", padx=(10, 10), pady=(10, 0))
 
             btn_run_check_bases = newButton(frame_top, text="Executar", command=lambda: self.process_manager.call_status_all_bases())
             # btn_run_check_bases = newButton(frame_top, text="Executar", command=lambda: self.process_manager.status_bases())
-            btn_run_check_bases.grid(row=0, column=0, sticky="nw", padx=(10,0), pady=(10,10))
+            btn_run_check_bases.grid(row=0, column=0, sticky="nw", padx=(10, 0), pady=(10, 10))
 
             call_var_widgets()
 
@@ -1961,6 +1968,7 @@ class App(Window):
         open_excell()
         calculadora_ativos()
         status_bases()
+
 
 if __name__ == "__main__":
     app = App()
