@@ -1,30 +1,28 @@
-from __init__ import *
-
-VERSION_APP = "1.0.0"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-# -----------------------------------------------------------------------
-
 from datetime import date
 
 import numpy as np
 import pandas as pd
+from __init__ import *  # noqa: F403, F405, E402
 from dateutil.relativedelta import relativedelta
 
-from tools.biblioteca_processos import DadosCarteirasAtivos
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools
+append_paths()  # noqa: F403, F405, E402
 
-# -----------------------------------------------------------------------
+from tools.biblioteca_processos import DadosCarteirasAtivos  # noqa: F403, F405, E402
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+from tools.my_logger import Logger  # noqa: F403, F405, E402
+from tools.py_tools import FuncoesPyTools  # noqa: F403, F405, E402
 
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "1.0.0"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405, E402
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405, E402
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
 
 opcoes_fundos = [
     "Strix Yield Master",
@@ -164,8 +162,7 @@ class gerencialFront:
                 return rent_papel
             elif (
                 ativo
-                in ["FIDC EMP HOME SN1", "FIDC EMP HOME SN4", "FIDC HOME EQUITY SR5"]
-                and tipo_indexador == "IPCA +"
+                in ["FIDC EMP HOME SN1", "FIDC EMP HOME SN4", "FIDC HOME EQUITY SR5"] and tipo_indexador == "IPCA +"
             ):
                 papel = perc_papel
                 rent_papel = self.ipca_2meses + papel
@@ -369,11 +366,8 @@ class gerencialFront:
         self.outras_classes_alocacao_total = self.df_outras_classes["% Alocação"].sum()
 
         df_carrego_valido = self.df_outras_classes[
-            (self.df_outras_classes["Carrego CDI +"] != 0)
-            | (
-                self.df_outras_classes["Classe Ativo"].isin(
-                    ["Tit. Publicos", "Compromissada"]
-                )
+            (self.df_outras_classes["Carrego CDI +"] != 0) | (self.df_outras_classes["Classe Ativo"].isin(
+                ["Tit. Publicos", "Compromissada"])
             )
         ]
 
@@ -395,11 +389,8 @@ class gerencialFront:
         self.alocacao_total_antes_adm = self.df_resultados_classes["% Alocação"].sum()
 
         df_carrego_valido = self.df_resultados_classes[
-            (self.df_resultados_classes["Carrego CDI +"] != 0)
-            | (
-                self.df_resultados_classes["Classe Ativo"].isin(
-                    ["Tit. Publicos", "Compromissada"]
-                )
+            (self.df_resultados_classes["Carrego CDI +"] != 0) | (self.df_resultados_classes["Classe Ativo"].isin(
+                ["Tit. Publicos", "Compromissada"])
             )
         ]
 
@@ -630,12 +621,10 @@ class gerencialFront:
         for emissor in emissores:
             aux_df_emissor = df_debentures[df_debentures["Emissor"] == emissor].copy()
             aux_df_emissor.loc[:, "aux_carrego"] = aux_df_emissor["Carrego CDI +"] * (
-                aux_df_emissor["Exposição (R$)"]
-                / aux_df_emissor["Exposição (R$)"].sum()
+                aux_df_emissor["Exposição (R$)"] / aux_df_emissor["Exposição (R$)"].sum()
             )
             aux_df_emissor.loc[:, "aux_duration"] = aux_df_emissor["Duration"] * (
-                aux_df_emissor["Exposição (R$)"]
-                / aux_df_emissor["Exposição (R$)"].sum()
+                aux_df_emissor["Exposição (R$)"] / aux_df_emissor["Exposição (R$)"].sum()
             )
             aux_df_emissor = (
                 aux_df_emissor[
@@ -681,9 +670,8 @@ class gerencialFront:
 
         df_letras_financeiras = (
             self.df_carteira_all[
-                (self.df_carteira_all["Classe Ativo"] == "LF")
-                | (self.df_carteira_all["Classe Ativo"] == "LFSC")
-                | (self.df_carteira_all["Classe Ativo"] == "LFSN-PRE")
+                (self.df_carteira_all["Classe Ativo"] == "LF") | (self.df_carteira_all["Classe Ativo"] == "LFSC") | (
+                    self.df_carteira_all["Classe Ativo"] == "LFSN-PRE")
             ]
             .copy()
             .reset_index(drop=True)
@@ -721,12 +709,10 @@ class gerencialFront:
                 df_letras_financeiras["Emissor"] == emissor
             ].copy()
             aux_df_emissor.loc[:, "aux_carrego"] = aux_df_emissor["Carrego CDI +"] * (
-                aux_df_emissor["Exposição (R$)"]
-                / aux_df_emissor["Exposição (R$)"].sum()
+                aux_df_emissor["Exposição (R$)"] / aux_df_emissor["Exposição (R$)"].sum()
             )
             aux_df_emissor.loc[:, "aux_duration"] = aux_df_emissor["Duration"] * (
-                aux_df_emissor["Exposição (R$)"]
-                / aux_df_emissor["Exposição (R$)"].sum()
+                aux_df_emissor["Exposição (R$)"] / aux_df_emissor["Exposição (R$)"].sum()
             )
             aux_df_emissor = (
                 aux_df_emissor[
@@ -749,21 +735,9 @@ class gerencialFront:
                 aux_df_emissor["aux_duration"].values[0],
             ]
 
-        # df_letras_financeiras["Exposição (R$)"] = df_letras_financeiras[
-        #     "Exposição (R$)"
-        # ].apply(lambda x: f"{x:,.0f}")
         df_letras_financeiras["Duration"] = df_letras_financeiras["Duration"].apply(
             lambda x: int(x) if pd.notnull(x) else None
         )
-        # for coluna in [
-        #     "% Alocação",
-        #     "Carrego Original",
-        #     "Carrego CDI +",
-        #     "Taxa de Emissão",
-        # ]:
-        #     df_letras_financeiras[coluna] = df_letras_financeiras[coluna].apply(
-        #         lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
-        #     )
 
         self.df_letras_financeiras = df_letras_financeiras
         self.emissores_lfs = emissores_lfs
@@ -806,12 +780,10 @@ class gerencialFront:
         for emissor in emissores:
             aux_df_emissor = df_fidcs[df_fidcs["Emissor"] == emissor].copy()
             aux_df_emissor.loc[:, "aux_carrego"] = aux_df_emissor["Carrego CDI +"] * (
-                aux_df_emissor["Exposição (R$)"]
-                / aux_df_emissor["Exposição (R$)"].sum()
+                aux_df_emissor["Exposição (R$)"] / aux_df_emissor["Exposição (R$)"].sum()
             )
             aux_df_emissor.loc[:, "aux_duration"] = aux_df_emissor["Duration"] * (
-                aux_df_emissor["Exposição (R$)"]
-                / aux_df_emissor["Exposição (R$)"].sum()
+                aux_df_emissor["Exposição (R$)"] / aux_df_emissor["Exposição (R$)"].sum()
             )
             aux_df_emissor = (
                 aux_df_emissor[
@@ -834,21 +806,9 @@ class gerencialFront:
                 aux_df_emissor["aux_duration"].values[0],
             ]
 
-        # df_fidcs["Exposição (R$)"] = df_fidcs["Exposição (R$)"].apply(
-        #     lambda x: f"{x:,.0f}"
-        # )
         df_fidcs["Duration"] = df_fidcs["Duration"].apply(
             lambda x: int(x) if pd.notnull(x) else None
         )
-        # for coluna in [
-        #     "% Alocação",
-        #     "Carrego Original",
-        #     "Carrego CDI +",
-        #     "Taxa de Emissão",
-        # ]:
-        #     df_fidcs[coluna] = df_fidcs[coluna].apply(
-        #         lambda x: f"{x:,.2f}%" if pd.notnull(x) else None
-        #     )
 
         self.df_fidcs = df_fidcs
         self.emissores_fidcs = emissores_fidcs
@@ -874,8 +834,8 @@ class gerencialFront:
     def puxa_bases(self):
 
         self.df_cadastro = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT ATIVO, EMISSOR, TAXA_EMISSAO/100 AS TAXA_EMISSAO, GESTOR, DATA_VENCIMENTO, INDEXADOR "
-            f"FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('Provisões & Despesas', 'Ações BR', 'Bonds', 'CD', 'TIPS')"
+            "SELECT DISTINCT ATIVO, EMISSOR, TAXA_EMISSAO/100 AS TAXA_EMISSAO, GESTOR, DATA_VENCIMENTO, INDEXADOR "
+            "FROM TB_CADASTRO_ATIVOS WHERE TIPO_ATIVO NOT IN ('Provisões & Despesas', 'Ações BR', 'Bonds', 'CD', 'TIPS')"
         )
 
         self.df_carteira = self.manager_sql.select_dataframe(
@@ -1097,13 +1057,13 @@ class passivosCotizar:
     def base_passivos_cotizar(self):
 
         df_cotas = self.manager_sql.select_dataframe(
-            f"SELECT d.REFDATE, d.FUNDO, d.COTA_LIQUIDA "
-            f"FROM TB_DADOS_FUNDOS d "
-            f"INNER JOIN ("
-            f"SELECT FUNDO, MAX(REFDATE) AS MAX_REFDATE "
-            f"FROM TB_DADOS_FUNDOS "
-            f"GROUP BY FUNDO"
-            f") m ON d.FUNDO = m.FUNDO AND d.REFDATE = m.MAX_REFDATE;"
+            "SELECT d.REFDATE, d.FUNDO, d.COTA_LIQUIDA "
+            "FROM TB_DADOS_FUNDOS d "
+            "INNER JOIN ("
+            "SELECT FUNDO, MAX(REFDATE) AS MAX_REFDATE "
+            "FROM TB_DADOS_FUNDOS "
+            "GROUP BY FUNDO"
+            ") m ON d.FUNDO = m.FUNDO AND d.REFDATE = m.MAX_REFDATE;"
         ).rename(columns={"FUNDO": "FUNDO_SUPORTE"})
 
         df_cotas["FUNDO"] = df_cotas["FUNDO_SUPORTE"].map(dict_aux_dados_fundos)
@@ -1186,3 +1146,96 @@ class riscoLiquidezFundos:
         self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
 
         self.lista_titulos_publicos = ["Tit. Publicos", "Compromissada"]
+
+
+class tabelasHTML:
+
+    @staticmethod
+    def df_to_normal_html(df: pd.DataFrame, width: int = 100, align_text: str = "left"):
+        css = f"""
+        <style>
+            .table1 table {{
+                width: {width}%;
+                border-collapse: collapse;
+                margin: 10px 0;
+                font-size: 11px;
+                text-align: {align_text};
+            }}
+            .table1 th {{
+                padding: 8px 10px;
+                border: 1px solid #dddddd;
+            }}
+
+            .table1 td {{
+                padding: 1px 5px;
+                border: 1px solid #dddddd;
+            }}
+
+            .table1 thead th {{
+                # background-color: #009879;
+                background-color: #2F4F4F;
+                color: #ffffff;
+                text-align: center;
+            }}
+            .table1 tbody tr {{
+                border-bottom: 1px solid #dddddd;
+            }}
+            .table1 tbody tr:nth-of-type(even) {{
+                background-color: #f3f3f3;
+            }}
+            .table1 tbody tr:last-of-type {{
+                border-bottom: 1px solid #009879;
+            }}
+        </style>
+        """
+        html = df.to_html(classes='table1 table-striped', index=False)
+        full_html = f"<div class='table1'>{css}{html}</div>"
+        return full_html
+
+    @staticmethod
+    def df_to_transpose_html(df: pd.DataFrame, width: int = 100):
+        if df.shape[0] != 1:
+            raise ValueError("O DataFrame deve conter exatamente uma linha.")
+
+        css = f"""
+        <style>
+            .table2 table {{
+                width: {width}%;
+                border-collapse: collapse;
+                margin: 25px 0;
+                font-size: 12px;
+                text-align: center;
+            }}
+            .table2 th, .table2 td {{
+                padding: 5px 1px;
+                border: 1px solid #dddddd;
+            }}
+            .table2 thead {{
+                display: none;
+            }}
+            .table2 tbody tr {{
+                border-bottom: 1px solid #dddddd;
+            }}
+            .table2 tbody tr:nth-of-type(even) {{
+                background-color: #f3f3f3;
+            }}
+            .table2 tbody tr:last-of-type {{
+                border-bottom: 1px solid #009879;
+            }}
+            .table2 tbody td:first-child {{
+                background-color: #2F4F4F;
+                color: #ffffff;
+                font-weight: bold;
+            }}
+        </style>
+        """
+
+        transposed_data = {
+            "Column": df.columns,
+            "Value": df.iloc[0]
+        }
+        df_transposed = pd.DataFrame(transposed_data)
+        html = df_transposed.to_html(classes='table2 table-striped', index=False, header=False)
+        full_html = f"<div class='table2'>{css}{html}</div>"
+
+        return full_html

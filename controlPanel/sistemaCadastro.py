@@ -1,26 +1,15 @@
-from __init__ import *
-
-VERSION_APP = "2.1.2"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-#-----------------------------------------------------------------------
-
 import unicodedata
 from datetime import datetime
 from tkinter import StringVar
 
 import pandas as pd
-from ttkbootstrap import Toplevel, Window
-from ttkbootstrap.constants import *
+from __init__ import *  # noqa: F403, F405, E402
+from ttkbootstrap import Toplevel, Window  # noqa: F403, F405, E402
+from ttkbootstrap.constants import *  # noqa: F403, F405, E402
 
-from controlPanel.biblioteca_widgets import (
+append_paths()  # noqa: F403, F405, E402
+
+from controlPanel.biblioteca_widgets import (  # noqa: F403, F405, E402
     Messagebox,
     newButton,
     newCombobox,
@@ -35,11 +24,22 @@ from controlPanel.biblioteca_widgets import (
     newScrolledText,
     newStringVar,
 )
-from tools.db_helper import SQL_Manager
-from tools.my_logger import Logger
-from tools.py_tools import FuncoesPyTools
+from tools.db_helper import SQL_Manager  # noqa: F403, F405, E402
+from tools.my_logger import Logger  # noqa: F403, F405, E402
+from tools.py_tools import FuncoesPyTools  # noqa: F403, F405, E402
 
-#-----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "2.1.2"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F403, F405, E402
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F403, F405, E402
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
+
 
 def normalize_string(s):
     normalized = unicodedata.normalize("NFKD", s)
@@ -77,7 +77,6 @@ class TelaCadastro(Window if __name__ == "__main__" else Toplevel):
         app=None,
         manager_sql=None,
         funcoes_pytools=None,
-        logger=None,
         *args,
         **kwargs,
     ):
@@ -86,30 +85,22 @@ class TelaCadastro(Window if __name__ == "__main__" else Toplevel):
         else:
             super().__init__(*args, **kwargs)
 
-        self.title("BackOffice Systems")
+        self.title("BOS - Sistema Cadastro")
         self.geometry("330x202")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is not None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
 
-        if logger is None:
-            self.logger = Logger(self.manager_sql)
-        else:
-            self.logger = logger
+        self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
 
         self.logger.info(
-            log_message=f"TelaCadastro - {VERSION_APP} - {ENVIRONMENT} - Instanciado",
-            script_original=SCRIPT_NAME,
+            log_message=f"TelaCadastro - {VERSION_APP} - {ENVIRONMENT} - Instanciado"
         )
+
+        self.logger.reset_index()
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -122,7 +113,8 @@ class TelaCadastro(Window if __name__ == "__main__" else Toplevel):
 
     def on_close(self):
         self.destroy()
-        self.app.lift()
+        if self.app is not None:
+            self.app.lift()
 
     def call_header(self):
 
@@ -187,36 +179,44 @@ class TelaCadastro(Window if __name__ == "__main__" else Toplevel):
 
 class windowCadastroEmissor(Toplevel):
 
-    def __init__(self, app, manager_sql=None, funcoes_pytools=None, **kwargs):
+    def __init__(self, app, manager_sql=None, funcoes_pytools=None, logger=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.title("BOS - Sistema Cadastro")
         self.geometry("570x370")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is not None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
 
         self.check_dados = None
 
         self.lista_tipo_emissor = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT TIPO_EMISSOR FROM TB_CADASTRO_EMISSOR ORDER BY TIPO_EMISSOR"
+            "SELECT DISTINCT TIPO_EMISSOR FROM TB_CADASTRO_EMISSOR ORDER BY TIPO_EMISSOR"
         )["TIPO_EMISSOR"].tolist()
 
         self.lista_grupo_economico = self.manager_sql.select_dataframe(
-            f"SELECT DISTINCT GRUPO_ECONOMICO FROM TB_CADASTRO_EMISSOR ORDER BY GRUPO_ECONOMICO"
+            "SELECT DISTINCT GRUPO_ECONOMICO FROM TB_CADASTRO_EMISSOR ORDER BY GRUPO_ECONOMICO"
         )["GRUPO_ECONOMICO"].tolist()
 
         self.app = app
+
+        self.logger = logger
+
+        self.logger.info(log_message="CadastroEmissor - Iniciado")
+
         self.frames()
         self.variaveis()
         self.widgets()
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.logger.info(log_message="CadastroEmissor - Finalizado")
+        self.logger.reset_index()
+        self.destroy()
 
     def format_str(self, s):
         # Remover espaços em branco nas extremidades
@@ -249,7 +249,7 @@ class windowCadastroEmissor(Toplevel):
 
     def widgets(self):
 
-        self.label_title = newLabelTitle(self.frame_header, text="Cadastro Emissor")
+        self.label_title = newLabelTitle(self.frame_header, text="Novo Emissor")
         self.label_title.grid(row=0, column=0, sticky="we")
 
         self.btn_reset = newButton(self.frame_botoes, text="Reset", width=15)
@@ -278,7 +278,7 @@ class windowCadastroEmissor(Toplevel):
         self.entry_emissor = newEntry(self.frame_body, textvariable=self.emissor)
         self.entry_emissor.grid(row=1, column=0, sticky="we", padx=5, pady=(0, 5))
         self.entry_emissor.set_tooltip(
-            msg="Campo obrigatório.", bootstyle_p=(INFO, INVERSE)
+            msg="Campo obrigatório.", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
         )
 
         self.label_grupo_economico = newLabelStatus(
@@ -296,7 +296,7 @@ class windowCadastroEmissor(Toplevel):
         )
         self.entry_grupo_economico.set_tooltip(
             msg="Campo obrigatório.\n\nCaso não tenha na lista, digitar um novo Grupo Econômico.",
-            bootstyle_p=(INFO, INVERSE),
+            bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
         )
         self.entry_grupo_economico["values"] = self.lista_grupo_economico
 
@@ -308,7 +308,7 @@ class windowCadastroEmissor(Toplevel):
         )
         self.entry_tipo_emissor.grid(row=5, column=0, sticky="we", padx=5, pady=(0, 5))
         self.entry_tipo_emissor.set_tooltip(
-            msg="Campo obrigatório.", bootstyle_p=(INFO, INVERSE)
+            msg="Campo obrigatório.", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
         )
         self.entry_tipo_emissor["values"] = self.lista_tipo_emissor
 
@@ -333,9 +333,7 @@ class windowCadastroEmissor(Toplevel):
     def comando_check_dados(self):
 
         if (
-            self.emissor.get() == ""
-            or self.grupo_economico.get() == ""
-            or self.tipo_emissor.get() == ""
+            self.emissor.get() == "" or self.grupo_economico.get() == "" or self.tipo_emissor.get() == ""
         ):
 
             if self.emissor.get() == "":
@@ -371,7 +369,7 @@ class windowCadastroEmissor(Toplevel):
                 self.entry_tipo_emissor.set_success()
                 self.check_dados = True
 
-        if self.check_dados == True:
+        if self.check_dados is True:
             self.travar_widgets()
             self.btn_cadastrar.set_enabled()
             self.btn_check_dados.set_disabled()
@@ -384,14 +382,15 @@ class windowCadastroEmissor(Toplevel):
 
     def comando_cadastrar(self):
 
-        check_if_exists = self.manager_sql.check_if_data_exists(
+        is_emissor_exists = self.manager_sql.check_if_data_exists(
             f"SELECT EMISSOR FROM TB_CADASTRO_EMISSOR WHERE EMISSOR = '{self.emissor.get()}'"
         )
 
-        if check_if_exists == True:
+        if is_emissor_exists is True:
             Messagebox.show_info(
                 title="Aviso", message="Emissor já cadastrado anteriormente."
             )
+            self.logger.info(log_message="CadastroEmissor - Tentativa de cadastro de emissor já cadastrado")
             self.lift()
         else:
             data = {
@@ -407,36 +406,44 @@ class windowCadastroEmissor(Toplevel):
             Messagebox.show_info(
                 title="Aviso", message="Emissor cadastrado com sucesso."
             )
+            self.logger.info(log_message=f"CadastroEmissor - Novo cadastro de emissor - {self.emissor.get()}")
             self.lift()
 
 
 class windowCadastroSetor(Toplevel):
 
-    def __init__(self, app, manager_sql=None, funcoes_pytools=None, **kwargs):
+    def __init__(self, app, manager_sql=None, funcoes_pytools=None, logger=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.title("BOS - Sistema Cadastro")
         self.geometry("395x231")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is None else FuncoesPyTools(self.manager_sql)
 
         self.check_dados = None
 
         self.app = app
+
+        self.logger = logger
+
+        self.logger.info(log_message="CadastroSetor - Iniciado")
 
         self.setor = newStringVar()
 
         self.frames()
         self.widgets()
         self.lift()
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.logger.info(log_message="CadastroSetor - Finalizado")
+        self.logger.reset_index()
+        self.destroy()
 
     def frames(self):
 
@@ -453,7 +460,7 @@ class windowCadastroSetor(Toplevel):
 
     def widgets(self):
 
-        self.label_title = newLabelTitle(self.frame_header, text="Cadastro Setor")
+        self.label_title = newLabelTitle(self.frame_header, text="Novo Setor")
         self.label_title.grid(row=0, column=0, sticky="we")
         self.label_title.set_tamanho_fonte(15)
 
@@ -496,7 +503,7 @@ class windowCadastroSetor(Toplevel):
             check_if_exists = check_in_list(
                 self.app.lista_setores, self.setor.get().strip()
             )
-            if check_if_exists == True:
+            if check_if_exists is True:
                 Messagebox.show_info(
                     title="Aviso", message="Setor já cadastrado anteriormente."
                 )
@@ -512,14 +519,15 @@ class windowCadastroSetor(Toplevel):
 
     def comando_cadastrar(self):
 
-        check_if_exists = self.manager_sql.check_if_data_exists(
+        is_setor_exists = self.manager_sql.check_if_data_exists(
             f"SELECT SETOR FROM TB_CADASTRO_SETOR WHERE SETOR = '{self.setor.get()}'"
         )
 
-        if check_if_exists == True:
+        if is_setor_exists is True:
             Messagebox.show_info(
                 title="Aviso", message="Setor já cadastrado anteriormente."
             )
+            self.logger.info(log_message="CadastroSetor - Tentativa de cadastro de setor já cadastrado")
             self.lift()
         else:
             data = {"SETOR": [self.setor.get()]}
@@ -529,6 +537,9 @@ class windowCadastroSetor(Toplevel):
             self.manager_sql.insert_dataframe(df_to_upload, "TB_CADASTRO_SETOR")
 
             Messagebox.show_info(title="Aviso", message="Setor cadastrado com sucesso.")
+
+            self.logger.info(log_message=f"CadastroSetor - Novo cadastro de setor - {self.setor.get()}")
+
             self.lift()
 
     def comando_reset(self):
@@ -542,31 +553,38 @@ class windowCadastroSetor(Toplevel):
 
 class windowCadastroClasseAtivo(Toplevel):
 
-    def __init__(self, app, manager_sql=None, funcoes_pytools=None, **kwargs):
+    def __init__(self, app, manager_sql=None, funcoes_pytools=None, logger=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.title("BOS - Sistema Cadastro")
         self.geometry("395x231")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is None else FuncoesPyTools(self.manager_sql)
 
         self.check_dados = None
 
         self.app = app
+
+        self.logger = logger
+
+        self.logger.info(log_message="CadastroClasseAtivo - Iniciado")
 
         self.classe_ativo = newStringVar()
 
         self.frames()
         self.widgets()
         self.lift()
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.logger.info(log_message="CadastroClasseAtivo - Finalizado")
+        self.logger.reset_index()
+        self.destroy()
 
     def frames(self):
 
@@ -630,7 +648,7 @@ class windowCadastroClasseAtivo(Toplevel):
             check_if_exists = check_in_list(
                 self.app.lista_classe_ativo, self.classe_ativo.get().strip()
             )
-            if check_if_exists == True:
+            if check_if_exists is True:
                 Messagebox.show_info(
                     title="Aviso", message="Classe ativo já cadastrado anteriormente."
                 )
@@ -646,14 +664,15 @@ class windowCadastroClasseAtivo(Toplevel):
 
     def comando_cadastrar(self):
 
-        check_if_exists = self.manager_sql.check_if_data_exists(
+        is_classe_ativo_exists = self.manager_sql.check_if_data_exists(
             f"SELECT CLASSE_ATIVO FROM TB_CADASTRO_CLASSE_ATIVO WHERE CLASSE_ATIVO = '{self.classe_ativo.get()}'"
         )
 
-        if check_if_exists == True:
+        if is_classe_ativo_exists is True:
             Messagebox.show_info(
                 title="Aviso", message="Classe ativo já cadastrado anteriormente."
             )
+            self.logger.info(log_message="CadastroClasseAtivo - Tentativa de cadastro de classe ativo já cadastrado")
             self.lift()
         else:
             data = {"CLASSE_ATIVO": [self.classe_ativo.get()]}
@@ -665,6 +684,7 @@ class windowCadastroClasseAtivo(Toplevel):
             Messagebox.show_info(
                 title="Aviso", message="Classe ativo cadastrado com sucesso."
             )
+            self.logger.info(log_message=f"CadastroClasseAtivo - Novo cadastro de classe ativo - {self.classe_ativo.get()}")
             self.lift()
 
     def comando_reset(self):
@@ -678,31 +698,40 @@ class windowCadastroClasseAtivo(Toplevel):
 
 class windowCadastroModalideEnquadramento(Toplevel):
 
-    def __init__(self, app, manager_sql=None, funcoes_pytools=None, **kwargs):
+    def __init__(self, app, manager_sql=None, funcoes_pytools=None, logger=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.title("BOS - Sistema Cadastro")
         self.geometry("395x231")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is None else FuncoesPyTools(self.manager_sql)
 
         self.check_dados = None
 
         self.app = app
+
+        self.logger = logger
+
+        self.logger.info(log_message="CadastroModalidadeEnquadramento - Iniciado")
 
         self.modalidade_enquadramento = newStringVar()
 
         self.frames()
         self.widgets()
         self.lift()
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.logger.info(log_message="CadastroModalidadeEnquadramento - Finalizado")
+        self.logger.reset_index()
+        self.destroy()
+        if self.app is not None:
+            self.app.lift()
 
     def frames(self):
 
@@ -720,7 +749,7 @@ class windowCadastroModalideEnquadramento(Toplevel):
     def widgets(self):
 
         self.label_title = newLabelTitle(
-            self.frame_header, text="Cadastro Modalidade Enquadramento"
+            self.frame_header, text="Nova Modalidade Enquadramento"
         )
         self.label_title.grid(row=0, column=0, sticky="we")
         self.label_title.set_tamanho_fonte(15)
@@ -769,7 +798,7 @@ class windowCadastroModalideEnquadramento(Toplevel):
                 self.app.lista_modalidade_enquadramento,
                 self.modalidade_enquadramento.get().strip(),
             )
-            if check_if_exists == True:
+            if check_if_exists is True:
                 Messagebox.show_info(
                     title="Aviso",
                     message="Modalidade enquadramento já cadastrado anteriormente.",
@@ -788,16 +817,17 @@ class windowCadastroModalideEnquadramento(Toplevel):
 
     def comando_cadastrar(self):
 
-        check_if_exists = self.manager_sql.check_if_data_exists(
+        is_modalidade_exists = self.manager_sql.check_if_data_exists(
             f"SELECT MODALIDADE_ENQUADRAMENTO FROM TB_CADASTRO_MODALIDADE_ENQUADRAMENTO "
             f"WHERE MODALIDADE_ENQUADRAMENTO = '{self.modalidade_enquadramento.get()}'"
         )
 
-        if check_if_exists == True:
+        if is_modalidade_exists is True:
             Messagebox.show_info(
                 title="Aviso",
                 message="Modalidade enquandramento já cadastrado anteriormente.",
             )
+            self.logger.info(log_message="CadastroModalidadeEnquadramento - Tentativa de cadastro de emissor já cadastrado")
             self.lift()
         else:
             data = {"MODALIDADE_ENQUADRAMENTO": [self.modalidade_enquadramento.get()]}
@@ -811,6 +841,7 @@ class windowCadastroModalideEnquadramento(Toplevel):
             Messagebox.show_info(
                 title="Aviso", message="Modalide enquadramento cadastrado com sucesso."
             )
+            self.logger.info(log_message=f"CadastroModalidadeEnquadramento - Novo cadastro de emissor - {self.emissor.get()}")
             self.lift()
 
     def comando_reset(self):
@@ -843,6 +874,8 @@ class ProcessManagerCadastroAtivos:
         )
 
         self.app = app
+
+        self.logger = self.app.logger
 
     def reset_variaveis(self):
 
@@ -1207,7 +1240,7 @@ class ProcessManagerCadastroAtivos:
                 self.app.text_box_resumo.set_danger()
                 return "not"
 
-            if self.app.process_pre_check == False:
+            if self.app.process_pre_check is False:
                 self.set_states_widgets()
 
             if self.app.emissor.get() == "Cadastrar Novo":
@@ -1216,6 +1249,7 @@ class ProcessManagerCadastroAtivos:
                     app=self,
                     manager_sql=self.app.manager_sql,
                     funcoes_pytools=self.app.funcoes_pytools,
+                    logger=self.logger,
                 )
 
                 self.app.emissor.set("")
@@ -1325,39 +1359,38 @@ class ProcessManagerCadastroAtivos:
             ]:
 
                 if (
-                    self.app.emissor.get() == ""
-                    or self.app.entry_data_vencimento.entry.get() == ""
-                    or self.app.indexador.get() == ""
-                    or self.app.taxa_emissao.get() == ""
-                    or self.app.indexador.get() == ""
+                    self.app.emissor.get() == "" or  # noqa: W504
+                    self.app.entry_data_vencimento.entry.get() == "" or  # noqa: W504
+                    self.app.indexador.get() == "" or  # noqa: W504
+                    self.app.taxa_emissao.get() == "" or  # noqa: W504
+                    self.app.indexador.get() == ""
                 ):
 
                     self.app.entry_ativo.set_danger()
                     self.app.ativo.set("Pend. Dados")
 
-                    self.app.text_box_resumo.insert("end", f"Ativo:\n")
+                    self.app.text_box_resumo.insert("end", "Ativo:\n")
 
                     if self.app.emissor.get() == "":
                         self.app.text_box_resumo.insert(
-                            "end", f"  Selecionar emissor.\n"
+                            "end", "  Selecionar emissor.\n"
                         )
 
                     if self.app.entry_data_vencimento.entry.get() == "":
                         self.app.text_box_resumo.insert(
-                            "end", f"  Data de vencimento vazia.\n"
+                            "end", "  Data de vencimento vazia.\n"
                         )
 
                     if (
-                        self.app.indexador.get() == "Selecione"
-                        or self.app.indexador.get() == ""
+                        self.app.indexador.get() == "Selecione" or self.app.indexador.get() == ""
                     ):
                         self.app.text_box_resumo.insert(
-                            "end", f"  Selecionar indexador.\n"
+                            "end", "  Selecionar indexador.\n"
                         )
 
                     if self.app.taxa_emissao.get() == "":
                         self.app.text_box_resumo.insert(
-                            "end", f"  Taxa de emissão vazia.\n"
+                            "end", "  Taxa de emissão vazia.\n"
                         )
 
                     self.check_ativo = False
@@ -1378,7 +1411,7 @@ class ProcessManagerCadastroAtivos:
                     self.app.entry_ativo.set_danger()
                     self.app.ativo.set("Pend. Dados")
                     self.app.text_box_resumo.insert(
-                        "end", f"Ativo: Data de vencimento vazia.\n"
+                        "end", "Ativo: Data de vencimento vazia.\n"
                     )
                     self.check_ativo = False
                 else:
@@ -1395,7 +1428,7 @@ class ProcessManagerCadastroAtivos:
                 if self.app.ativo.get() == "":
                     self.app.entry_ativo.set_danger()
                     self.app.text_box_resumo.insert(
-                        "end", f"Ativo: Campo obrigatório.\n"
+                        "end", "Ativo: Campo obrigatório.\n"
                     )
                     self.check_ativo = False
                 else:
@@ -1415,7 +1448,7 @@ class ProcessManagerCadastroAtivos:
                 self.app.entry_cod_ativo_btg.set_warning()
                 self.app.text_box_resumo.insert(
                     "end",
-                    f"Cod. Ativo BTG: Permitido vazio, necessário para rodar carteira.\n",
+                    "Cod. Ativo BTG: Permitido vazio, necessário para rodar carteira.\n",
                 )
             else:
                 self.app.entry_cod_ativo_btg.set_success()
@@ -1429,7 +1462,7 @@ class ProcessManagerCadastroAtivos:
                 self.app.entry_isin.set_warning()
                 self.app.text_box_resumo.insert(
                     "end",
-                    f"ISIN: Permitido vazio, porém necessário preenchimento posterior.\n",
+                    "ISIN: Permitido vazio, porém necessário preenchimento posterior.\n",
                 )
             else:
                 self.app.entry_isin.set_success()
@@ -1440,7 +1473,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.emissor.get() == "":
                 self.app.box_emissor.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"Emissor: Preenchimento obrigarório.\n"
+                    "end", "Emissor: Preenchimento obrigarório.\n"
                 )
                 self.check_emissor = False
             else:
@@ -1457,7 +1490,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.cod_if.get() == "":
                 self.app.entry_cod_if.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"Cod. IF: Preenchimento obrigarório.\n"
+                    "end", "Cod. IF: Preenchimento obrigarório.\n"
                 )
                 self.check_cod_if = False
             else:
@@ -1474,7 +1507,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.indexador.get() == "":
                 self.app.box_indexador.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"Indexador: Preenchimento obrigarório.\n"
+                    "end", "Indexador: Preenchimento obrigarório.\n"
                 )
                 self.check_indexador = False
             else:
@@ -1491,7 +1524,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.taxa_emissao.get() == "":
                 self.app.entry_taxa_emissao.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"Taxa de Emissão: Preenchimento obrigarório.\n"
+                    "end", "Taxa de Emissão: Preenchimento obrigarório.\n"
                 )
                 self.check_taxa_emissao = False
             else:
@@ -1509,7 +1542,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.vne.get() == "":
                 self.app.entry_vne.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"VNE: Preenchimento obrigarório.\n"
+                    "end", "VNE: Preenchimento obrigarório.\n"
                 )
                 self.check_vne = False
             else:
@@ -1526,7 +1559,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.entry_data_emissao.entry.get() == "":
                 self.app.entry_data_emissao.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"Data Emissão: Preenchimento obrigarório.\n"
+                    "end", "Data Emissão: Preenchimento obrigarório.\n"
                 )
                 self.check_data_emissao = False
             else:
@@ -1544,7 +1577,7 @@ class ProcessManagerCadastroAtivos:
             if self.app.entry_data_vencimento.entry.get() == "":
                 self.app.entry_data_vencimento.set_danger()
                 self.app.text_box_resumo.insert(
-                    "end", f"Data Vencimento: Preenchimento obrigarório.\n"
+                    "end", "Data Vencimento: Preenchimento obrigarório.\n"
                 )
                 self.check_data_vencimento = False
             else:
@@ -1571,7 +1604,7 @@ class ProcessManagerCadastroAtivos:
                     self.app.entry_data_rentabilidade.set_danger()
                     self.app.text_box_resumo.insert(
                         "end",
-                        f"Data Inicio Rentabilidade: Aguardando preenchimento 'Data Emissão'.\n",
+                        "Data Inicio Rentabilidade: Aguardando preenchimento 'Data Emissão'.\n",
                     )
                     self.check_data_rentabilidade = False
                 else:
@@ -1592,7 +1625,7 @@ class ProcessManagerCadastroAtivos:
                     self.app.entry_data_rentabilidade.set_danger()
                     self.app.text_box_resumo.insert(
                         "end",
-                        f"Data Inicio Rentabilidade: Preenchimento obrigatório.\n",
+                        "Data Inicio Rentabilidade: Preenchimento obrigatório.\n",
                     )
                     self.check_data_rentabilidade = False
                 else:
@@ -1641,13 +1674,14 @@ class ProcessManagerCadastroAtivos:
                     app=self.app,
                     manager_sql=self.app.manager_sql,
                     funcoes_pytools=self.app.funcoes_pytools,
+                    logger=self.logger,
                 )
                 self.check_setor = False
             else:
                 if self.app.setor.get() not in self.app.lista_setores:
                     self.app.box_setor.set_danger()
                     self.app.text_box_resumo.insert(
-                        "end", f"Setor: Preenchimento obrigatório.\n"
+                        "end", "Setor: Preenchimento obrigatório.\n"
                     )
                     Messagebox.show_info(title="Aviso", message="Setor não cadastrado.")
                     self.app.setor.set("")
@@ -1702,7 +1736,7 @@ class ProcessManagerCadastroAtivos:
                 except Exception:
                     self.app.box_classe_ativo.set_danger()
                     self.app.text_box_resumo.insert(
-                        "end", f"Classe Ativo: Preenchimento obrigatório.\n"
+                        "end", "Classe Ativo: Preenchimento obrigatório.\n"
                     )
                     self.check_classe_ativo = False
             elif self.app.classe_ativo.get() not in self.app.lista_classe_ativo:
@@ -1712,7 +1746,7 @@ class ProcessManagerCadastroAtivos:
                     title="Aviso", message="Classe ativo não cadastrado."
                 )
                 self.app.text_box_resumo.insert(
-                    "end", f"Classe Ativo: Preenchimento obrigatório.\n"
+                    "end", "Classe Ativo: Preenchimento obrigatório.\n"
                 )
                 self.check_classe_ativo = False
             elif self.app.classe_ativo.get() == "Cadastrar Novo":
@@ -1722,6 +1756,7 @@ class ProcessManagerCadastroAtivos:
                     app=self.app,
                     manager_sql=self.app.manager_sql,
                     funcoes_pytools=self.app.funcoes_pytools,
+                    logger=self.logger,
                 )
                 self.check_classe_ativo = False
             else:
@@ -1752,7 +1787,7 @@ class ProcessManagerCadastroAtivos:
                 except Exception:
                     self.app.box_modalidade_enquadramento.set_danger()
                     self.app.text_box_resumo.insert(
-                        "end", f"Modalidade Enquadramento: Preenchimento obrigatório.\n"
+                        "end", "Modalidade Enquadramento: Preenchimento obrigatório.\n"
                     )
                     self.check_modalidade_enquadramento = False
             elif (
@@ -1765,7 +1800,7 @@ class ProcessManagerCadastroAtivos:
                     title="Aviso", message="Modalidade enquadramento não cadastrado."
                 )
                 self.app.text_box_resumo.insert(
-                    "end", f"Modalidade Enquadramento: Preenchimento obrigatório.\n"
+                    "end", "Modalidade Enquadramento: Preenchimento obrigatório.\n"
                 )
                 self.check_modalidade_enquadramento = False
             elif self.app.modalidade_enquadramento.get() == "Cadastrar Novo":
@@ -1775,6 +1810,7 @@ class ProcessManagerCadastroAtivos:
                     app=self.app,
                     manager_sql=self.app.manager_sql,
                     funcoes_pytools=self.app.funcoes_pytools,
+                    logger=self.logger
                 )
                 self.check_modalidade_enquadramento = False
             else:
@@ -1925,7 +1961,7 @@ class ProcessManagerCadastroAtivos:
                 if self.app.ativo.get() == "":
                     self.app.ativo.set("Pend. Dados")
                     self.app.text_box_resumo.insert(
-                        "end", f"Ativo: Falta preenchimento.\n"
+                        "end", "Ativo: Falta preenchimento.\n"
                     )
                 else:
                     self.app.text_box_resumo.insert(
@@ -1936,7 +1972,7 @@ class ProcessManagerCadastroAtivos:
     def comando_confirmar_dados(self):
 
         confirma = Messagebox.okcancel(
-            message=(f"Travar dados para cadastro?"), title="Cadstro de Ativo"
+            message=("Travar dados para cadastro?"), title="Cadstro de Ativo"
         )
 
         if confirma == "OK":
@@ -2057,6 +2093,8 @@ class ProcessManagerCadastroAtivos:
             message="Ativo cadastrado com sucesso.", title="Cadastro de Ativo"
         )
 
+        self.app.janela_init.logger.info(log_message=f"CadastroAtivo - Ativo cadastrado com sucesso - {self.app.ativo.get()}")
+
         self.app.btn_exec_cadastro.set_disabled()
 
 
@@ -2074,20 +2112,14 @@ class CadastroAtivos(Toplevel):
 
         super().__init__(*args, **kwargs)
 
-        self.title("BackOffice Systems")
+        self.title("BOS - Sistema Cadastro")
         self.geometry("970x1080")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is not None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
 
         self.lista_tipo_ativos = [
             "CCB",
@@ -2116,6 +2148,7 @@ class CadastroAtivos(Toplevel):
 
         self.app = app
         self.janela_init = janela_init
+        self.logger = self.janela_init.logger
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -2144,9 +2177,13 @@ class CadastroAtivos(Toplevel):
         self.widgets_posicionamento_secundarios()
         self.resumo_cadastro()
 
+        self.logger.info(log_message="CadastroAtivo - Iniciado")
+
         self.mainloop()
 
     def on_close(self):
+        self.janela_init.logger.info(log_message="CadastroAtivo - Finalizado")
+        self.janela_init.logger.reset_index()
         self.destroy()
         self.janela_init.lift()
 
@@ -2200,7 +2237,7 @@ class CadastroAtivos(Toplevel):
     def update_classe_ativo(self):
 
         self.lista_classe_ativo = self.manager_sql.select_dataframe(
-            f"SELECT * FROM TB_CADASTRO_CLASSE_ATIVO"
+            "SELECT * FROM TB_CADASTRO_CLASSE_ATIVO"
         )["CLASSE_ATIVO"].tolist()
         self.lista_classe_ativo.insert(0, "Cadastrar Novo")
 
@@ -2212,7 +2249,7 @@ class CadastroAtivos(Toplevel):
     def update_modalidade_enquadramento(self):
 
         self.lista_modalidade_enquadramento = self.manager_sql.select_dataframe(
-            f"SELECT * FROM TB_CADASTRO_MODALIDADE_ENQUADRAMENTO"
+            "SELECT * FROM TB_CADASTRO_MODALIDADE_ENQUADRAMENTO"
         )["MODALIDADE_ENQUADRAMENTO"].tolist()
         self.lista_modalidade_enquadramento.insert(0, "Cadastrar Novo")
 
@@ -2227,8 +2264,8 @@ class CadastroAtivos(Toplevel):
 
         self.dict_modalidade_enquadramento = (
             self.manager_sql.select_dataframe(
-                f"SELECT DISTINCT TIPO_ATIVO, MODALIDADE_ENQUADRAMENTO FROM TB_CADASTRO_ATIVOS "
-                f" WHERE MODALIDADE_ENQUADRAMENTO IS NOT NULL AND TIPO_ATIVO NOT IN ('Tit. Publicos')"
+                "SELECT DISTINCT TIPO_ATIVO, MODALIDADE_ENQUADRAMENTO FROM TB_CADASTRO_ATIVOS "
+                " WHERE MODALIDADE_ENQUADRAMENTO IS NOT NULL AND TIPO_ATIVO NOT IN ('Tit. Publicos')"
             )
             .set_index("TIPO_ATIVO")["MODALIDADE_ENQUADRAMENTO"]
             .to_dict()
@@ -2249,8 +2286,8 @@ class CadastroAtivos(Toplevel):
 
         self.dict_classe_ativo = (
             self.manager_sql.select_dataframe(
-                f"SELECT DISTINCT TIPO_ATIVO, CLASSE_ATIVO FROM TB_CADASTRO_ATIVOS "
-                f" WHERE MODALIDADE_ENQUADRAMENTO IS NOT NULL AND TIPO_ATIVO NOT IN ('Tit. Publicos')"
+                "SELECT DISTINCT TIPO_ATIVO, CLASSE_ATIVO FROM TB_CADASTRO_ATIVOS "
+                " WHERE MODALIDADE_ENQUADRAMENTO IS NOT NULL AND TIPO_ATIVO NOT IN ('Tit. Publicos')"
             )
             .set_index("TIPO_ATIVO")["CLASSE_ATIVO"]
             .to_dict()
@@ -2301,10 +2338,10 @@ class CadastroAtivos(Toplevel):
 
         newLabelTitle(
             frame_header,
-            text=f"{ENVIRONMENT if ENVIRONMENT == "DEVELOPMENT" else 'Cadastro Ativos'}",
+            text=f"{ENVIRONMENT if ENVIRONMENT == "DEVELOPMENT" else 'Cadastro de Ativos'}",
         ).grid(row=0, column=0, sticky="we")
 
-        newLabelSubtitle(frame_header, text=f"Versão: {VERSION_APP}").grid(
+        newLabelSubtitle(frame_header, text=f"Usuário: {str_user}").grid(  # noqa: F403, F405, E402
             row=1, column=0, sticky="we"
         )
 
@@ -2403,7 +2440,7 @@ class CadastroAtivos(Toplevel):
             self.entry_ativo.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_ativo.set_tooltip(
                 msg="Campo obrigarório.\nPara alguns ativos tem preenchimento automático.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_cod_ativo_btg():
@@ -2420,10 +2457,10 @@ class CadastroAtivos(Toplevel):
             self.entry_cod_ativo_btg.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_cod_ativo_btg.set_tooltip(
                 msg=(
-                    f"Campo permitido vazio.\n"
-                    f"Para crédito privado, é necessário preenchimento posterior no processo de batimento de carteira."
+                    "Campo permitido vazio.\n"
+                    "Para crédito privado, é necessário preenchimento posterior no processo de batimento de carteira."
                 ),
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_isin():
@@ -2436,7 +2473,7 @@ class CadastroAtivos(Toplevel):
             self.entry_isin.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_isin.set_tooltip(
                 msg="Campo opcional, mas importante preenchimento.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_cod_if():
@@ -2449,7 +2486,7 @@ class CadastroAtivos(Toplevel):
             self.entry_cod_if.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_cod_if.set_tooltip(
                 msg="Campo opcional, mas importante preenchimento.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_vne():
@@ -2465,7 +2502,7 @@ class CadastroAtivos(Toplevel):
             )
             self.entry_vne.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_vne.set_tooltip(
-                msg="Usar '.' como separador decimal.", bootstyle_p=(INFO, INVERSE)
+                msg="Usar '.' como separador decimal.", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
             )
 
         def call_widgets_indexador():
@@ -2480,7 +2517,7 @@ class CadastroAtivos(Toplevel):
             self.box_indexador.set_default()
             self.box_indexador.set_tooltip(
                 msg="Se não existir na lista vai abrir caixa de cadastro.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_taxa_emissao():
@@ -2498,7 +2535,7 @@ class CadastroAtivos(Toplevel):
             )
             self.entry_taxa_emissao.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_taxa_emissao.set_tooltip(
-                msg="Usar '.' como separador decimal.", bootstyle_p=(INFO, INVERSE)
+                msg="Usar '.' como separador decimal.", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
             )
 
         def call_widgets_data_emissao():
@@ -2512,7 +2549,7 @@ class CadastroAtivos(Toplevel):
             self.entry_data_emissao.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_data_emissao.set_disabled()
             self.entry_data_emissao.set_tooltip(
-                msg="Usar padrão: dd/mm/yyyy", bootstyle_p=(INFO, INVERSE)
+                msg="Usar padrão: dd/mm/yyyy", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
             )
 
         def call_widgets_data_vencimento():
@@ -2528,7 +2565,7 @@ class CadastroAtivos(Toplevel):
             )
             self.entry_data_vencimento.set_disabled()
             self.entry_data_vencimento.set_tooltip(
-                msg="Usar padrão: dd/mm/yyyy", bootstyle_p=(INFO, INVERSE)
+                msg="Usar padrão: dd/mm/yyyy", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
             )
 
         def call_widgets_emissor():
@@ -2545,7 +2582,7 @@ class CadastroAtivos(Toplevel):
             self.box_emissor.set_default()
             self.box_emissor.set_tooltip(
                 msg="Campo obrigarório.\nSe não existir na lista vai abrir caixa de cadastro.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_all_widgets():
@@ -2641,7 +2678,7 @@ class CadastroAtivos(Toplevel):
             self.entry_data_rentabilidade.set_disabled()
             self.entry_data_rentabilidade.set_tooltip(
                 msg="Para crédito privado vai ser preenchido = Data Emissão.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_setor():
@@ -2659,7 +2696,7 @@ class CadastroAtivos(Toplevel):
             self.box_setor.set_default()
             self.box_setor.set_tooltip(
                 msg="Se não existir na lista vai abrir caixa de cadastro.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_gestor():
@@ -2677,7 +2714,7 @@ class CadastroAtivos(Toplevel):
             self.box_gestor.set_default()
             self.box_gestor.set_tooltip(
                 msg="Se não existir na lista vai abrir caixa de cadastro.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_cnpj():
@@ -2689,7 +2726,7 @@ class CadastroAtivos(Toplevel):
             )
             self.entry_cnpj.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_cnpj.set_tooltip(
-                msg="Apenas números.", bootstyle_p=(INFO, INVERSE)
+                msg="Apenas números.", bootstyle_p=(INFO, INVERSE)  # noqa: F403, F405, E402
             )
 
         def call_widgets_cod_bbg():
@@ -2712,10 +2749,10 @@ class CadastroAtivos(Toplevel):
             self.text_obs.configure(height=5)
             self.text_obs.set_tooltip(
                 msg=(
-                    f"Campo opcional caso queria deixar alguma observação sobre o ativo.\n"
-                    f"Máximo de 150 caracteres."
+                    "Campo opcional caso queria deixar alguma observação sobre o ativo.\n"
+                    "Máximo de 150 caracteres."
                 ),
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_grupo_economico():
@@ -2734,7 +2771,7 @@ class CadastroAtivos(Toplevel):
             )
             self.entry_grupo_economico.set_tooltip(
                 msg="Vai ser preenchido de acordo com o emissor.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_tipo_emissor():
@@ -2751,7 +2788,7 @@ class CadastroAtivos(Toplevel):
             self.entry_tipo_emissor.grid(row=1, column=0, sticky="we", padx=0, pady=0)
             self.entry_tipo_emissor.set_tooltip(
                 msg="Vai ser preenchido de acordo com o emissor.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_classe_ativo():
@@ -2771,7 +2808,7 @@ class CadastroAtivos(Toplevel):
             self.box_classe_ativo.set_default()
             self.box_classe_ativo.set_tooltip(
                 msg="Se não existir na lista, selecionar 'Cadastrar Novo'.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_widgets_modalidade_enquadramento():
@@ -2797,7 +2834,7 @@ class CadastroAtivos(Toplevel):
             self.box_modalidade_enquadramento.set_default()
             self.box_modalidade_enquadramento.set_tooltip(
                 msg="Se não existir na lista, selecionar 'Cadastrar Novo'.",
-                bootstyle_p=(INFO, INVERSE),
+                bootstyle_p=(INFO, INVERSE),  # noqa: F403, F405, E402
             )
 
         def call_all_widgets():
@@ -3378,8 +3415,7 @@ class ProcessManagerFLuxoFinanceiro:
                             message="Campos de fluxo devem ser selecionados!",
                         )
                     elif (
-                        self.app.fluxo_juros.get() != "bullet"
-                        or self.app.fluxo_amortizacao.get() != "bullet"
+                        self.app.fluxo_juros.get() != "bullet" or self.app.fluxo_amortizacao.get() != "bullet"
                     ):
                         Messagebox.show_warning(
                             title="Aviso",

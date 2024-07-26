@@ -33,15 +33,11 @@ class enquadramentoCarteira:
 
     def __init__(self, manager_sql=None, funcoes_pytools=None):
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is not None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
+
+        self.manager_captura_dados = capturaDados(manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools)
 
         self.dict_limites_emissor = {
             "Instituição Financeira": 0.2,
@@ -60,6 +56,8 @@ class enquadramentoCarteira:
             "CCB": 1,
             "Compromissada": 1,
         }
+
+        self.call_suportes()
 
     def set_refdate(self, refdate: date):
 
@@ -168,9 +166,9 @@ class enquadramentoCarteira:
 
         self.dict_limites_emissores = {"BANCO BRADESCO S/A": 0.06}
 
-    def call_enquadramento_modalidade_ativos_com_limite(self):
+    def call_enquadramento_modalidade_ativos_com_limite(self, df_trabalhada: pd.DataFrame = None):
 
-        df_carteira = self.df_carteira_yield_master
+        df_carteira = df_trabalhada if df_trabalhada is not None else self.df_carteira_yield_master.copy()
 
         df_carteira["MODALIDADE_ENQUADRAMENTO"] = df_carteira["ATIVO"].map(
             self.dict_modalidade_ativos
@@ -317,9 +315,9 @@ class enquadramentoCarteira:
 
         self.df_enquadramento_modalidade_ativos_com_limite = df_exposicao_com_limites
 
-    def call_enquadramento_grupos_economicos_com_limite(self):
+    def call_enquadramento_grupos_economicos_com_limite(self, df_trabalhada: pd.DataFrame = None):
 
-        df_carteira = self.df_carteira_yield_master.copy()
+        df_carteira = df_trabalhada if df_trabalhada is not None else self.df_carteira_yield_master.copy()
 
         df_carteira["EMISSOR"] = df_carteira["ATIVO"].map(self.dict_cad_ativo)
 
@@ -411,19 +409,23 @@ class enquadramentoCarteira:
             .rename(columns={"Grupo Econômico": "Companhias Fechadas"})
         )
 
-    def call_enquadramento_emissores(self):
+    def call_enquadramento_emissores(self, df_trabalhada: pd.DataFrame = None):
 
-        df_carteira = self.df_carteira_yield_master.copy()
+        df_carteira = df_trabalhada if df_trabalhada is not None else self.df_carteira_yield_master.copy()
+
         df_carteira["EMISSOR"] = df_carteira["ATIVO"].map(self.dict_cad_ativo)
         df_carteira = df_carteira[~df_carteira["EMISSOR"].isnull()]
         df_carteira = df_carteira[
             (df_carteira["TIPO_ATIVO"] != "Compromissada") & (df_carteira["TIPO_ATIVO"] != "Tit. Publicos")
         ]
+
+        # df_carteira = df_carteira[['REFDATE', 'FUNDO', 'EMISSOR', 'FINANCEIRO_D0']].groupby(['REFDATE', 'FUNDO', 'EMISSOR']).sum()
+
         df_carteira["Exposição"] = df_carteira["FINANCEIRO_D0"] / self.pl_yield_master
 
         df_carteira = (
-            df_carteira[["EMISSOR", "TIPO_ATIVO", "FINANCEIRO_D0", "Exposição"]]
-            .groupby(["EMISSOR", "TIPO_ATIVO"])
+            df_carteira[["EMISSOR", "FINANCEIRO_D0", "Exposição"]]
+            .groupby(["EMISSOR"])
             .sum()
             .sort_values("Exposição", ascending=False)
             .reset_index()
@@ -432,6 +434,7 @@ class enquadramentoCarteira:
         df_carteira["Limite Individual"] = df_carteira["EMISSOR"].map(
             lambda x: self.dict_limites_emissores.get(x, 0.05)
         )
+
         df_carteira["Status Enquadramento"] = np.where(
             df_carteira["Exposição"] > df_carteira["Limite Individual"],
             "Fora do Limite",
@@ -441,13 +444,148 @@ class enquadramentoCarteira:
         df_carteira.rename(
             columns={
                 "EMISSOR": "Emissor",
-                "FINANCEIRO_D0": "Financeiro",
-                "TIPO_ATIVO": "Classe Ativo",
+                "FINANCEIRO_D0": "Financeiro"
             },
             inplace=True,
         )
 
         self.df_enquandramento_emissores = df_carteira.copy()
+
+    def call_enquadramento_pre_trading(self, refdate: date):
+
+        def call_bases(refdate):
+
+            max_refdate = self.manager_captura_dados.lastRefdateCarteira("Strix Yield Master", refdate)
+
+            self.set_refdate(max_refdate)
+
+            self.call_dados_yield_master()
+
+        def set_df_boletas_pre_trade(refdate):
+
+            df_boletas_pre_trade = self.manager_sql.select_dataframe(
+                f"SELECT * FROM TB_BOLETAS_PRE_TRADING WHERE TRADE_DATE = '{refdate}'")
+
+            df_boletas_pre_trade['FINANCEIRO'] = df_boletas_pre_trade['PU'] * df_boletas_pre_trade['QUANTIDADE']
+
+            return df_boletas_pre_trade
+
+        def set_enquadramento_df_carteira_d0(refdate, df_boletas_pre_trade):
+
+            df_carteira_d0 = self.df_carteira_yield_master
+
+            for index, row in df_carteira_d0.iterrows():
+                if row['TIPO_ATIVO'] in ['Caixa', 'Compromissada', 'Fundos Caixa']:
+                    index_cart = index
+                    financeiro_caixa = row['FINANCEIRO_D0']
+                    break
+
+            financeiro_boletas = df_boletas_pre_trade['FINANCEIRO'].sum()
+            financeiro_menos_caixa = financeiro_boletas * -1
+            financeiro_caixa_pos_boleta = financeiro_caixa + financeiro_menos_caixa
+
+            df_carteira_d0.iloc[index_cart, df_carteira_d0.columns.get_loc('FINANCEIRO_D0')] = financeiro_caixa_pos_boleta
+
+            df_boletas_pre_trade = df_boletas_pre_trade[['TRADE_DATE', 'FUNDO', 'TIPO_ATIVO', 'ATIVO', 'FINANCEIRO']].rename(
+                columns={'TRADE_DATE': 'REFDATE', 'FINANCEIRO': 'FINANCEIRO_D0'})
+
+            df_carteira_d0 = pd.concat([df_carteira_d0[[
+                'FUNDO',
+                'TIPO_ATIVO',
+                'ATIVO',
+                'FINANCEIRO_D0'
+            ]], df_boletas_pre_trade[['FUNDO', 'TIPO_ATIVO', 'ATIVO', 'FINANCEIRO_D0']]]).groupby([
+                'FUNDO', 'TIPO_ATIVO', 'ATIVO']).sum().reset_index()
+            df_carteira_d0.insert(0, 'REFDATE', refdate)
+
+            self.call_enquadramento_modalidade_ativos_com_limite(df_carteira_d0)
+            self.call_enquadramento_grupos_economicos_com_limite(df_carteira_d0)
+            self.call_enquadramento_emissores(df_carteira_d0)
+
+        def set_detalhamento_boletas_pre_trading(df_boletas_pre_trade):
+
+            df_detalhes_pre_trade = df_boletas_pre_trade.copy()
+
+            df_enquadramento_modalidade_ativos_com_limite = self.df_enquadramento_modalidade_ativos_com_limite.copy()
+            df_enquadramento_grupos_economicos_com_limite = self.df_enquadramento_grupos_economicos_com_limite.copy()
+            df_enquadramento_emissores = self.df_enquandramento_emissores.copy()
+
+            df_detalhes_pre_trade['EMISSOR'] = df_detalhes_pre_trade['ATIVO'].map(self.dict_cad_ativo)
+            df_detalhes_pre_trade['MODALIDADE_ATIVO'] = df_detalhes_pre_trade['ATIVO'].map(self.dict_modalidade_ativos)
+            df_detalhes_pre_trade = pd.merge(df_detalhes_pre_trade, self.df_cad_emissor, how='left', on='EMISSOR')
+
+            # Cria detalhamento com dados D0
+
+            df_detalhes_pre_trade = df_detalhes_pre_trade[[
+                'TIPO_ATIVO', 'ATIVO', 'EMISSOR', 'TIPO_EMISSOR', 'GRUPO_ECONOMICO', 'MODALIDADE_ATIVO']].drop_duplicates()
+
+            df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite = pd.merge(
+                df_detalhes_pre_trade, df_enquadramento_modalidade_ativos_com_limite,
+                how='left', left_on='MODALIDADE_ATIVO', right_on='Modalidade Enquadramento')
+
+            df_detalhes_boletas_pre_trading_enquadramento_emissores = pd.merge(
+                df_detalhes_pre_trade, df_enquadramento_emissores,
+                how='left', left_on='EMISSOR', right_on='Emissor')
+
+            df_detalhes_boletas_pre_trading_enquadramento_grupo_economico = pd.merge(
+                df_detalhes_pre_trade, df_enquadramento_grupos_economicos_com_limite,
+                how='left', left_on=['GRUPO_ECONOMICO', 'TIPO_EMISSOR'], right_on=['Grupo Econômico', 'TIPO_EMISSOR'])
+
+            # Merge com detalhes de dm1
+
+            self.call_enquadramento_modalidade_ativos_com_limite()
+            self.call_enquadramento_grupos_economicos_com_limite()
+            self.call_enquadramento_emissores()
+
+            df_modalidades_dm1 = self.df_enquadramento_modalidade_ativos_com_limite.copy()
+            df_grupo_economico_dm1 = self.df_enquadramento_grupos_economicos_com_limite.copy()
+            df_emissores_dm1 = self.df_enquandramento_emissores.copy()
+
+            df_modalidades_dm1 = df_modalidades_dm1[['Modalidade Enquadramento', 'Financeiro', 'Exposição', 'Status Enquadramento']]
+            df_modalidades_dm1.rename(columns={
+                'Financeiro': 'Financeiro Dm1',
+                'Exposição': 'Exposição Dm1',
+                'Status Enquadramento': 'Status Enquadramento Dm1'}, inplace=True)
+            df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite = pd.merge(
+                df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite,
+                df_modalidades_dm1, how='left', left_on='Modalidade Enquadramento', right_on='Modalidade Enquadramento')
+
+            df_grupo_economico_dm1 = df_grupo_economico_dm1[['Grupo Econômico', 'Financeiro', 'Exposição', 'Status Enquadramento']].copy()
+            df_grupo_economico_dm1.rename(columns={
+                'Grupo Econômico': 'Grupo Econômico',
+                'Financeiro': 'Financeiro Dm1',
+                'Exposição': 'Exposição Dm1',
+                'Status Enquadramento': 'Status Enquadramento Dm1'}, inplace=True)
+            df_detalhes_boletas_pre_trading_enquadramento_grupo_economico = pd.merge(
+                df_detalhes_boletas_pre_trading_enquadramento_grupo_economico,
+                df_grupo_economico_dm1, how='left', left_on='GRUPO_ECONOMICO', right_on='Grupo Econômico')
+
+            df_emissores_dm1 = df_emissores_dm1[['Emissor', 'Financeiro', 'Exposição', 'Status Enquadramento']].copy()
+            df_emissores_dm1.rename(columns={
+                'Financeiro': 'Financeiro Dm1',
+                'Exposição': 'Exposição Dm1',
+                'Status Enquadramento': 'Status Enquadramento Dm1'}, inplace=True)
+            df_detalhes_boletas_pre_trading_enquadramento_emissores = pd.merge(
+                df_detalhes_boletas_pre_trading_enquadramento_emissores,
+                df_emissores_dm1, how='left', left_on='EMISSOR', right_on='Emissor')
+
+            return (
+                df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite,
+                df_detalhes_boletas_pre_trading_enquadramento_emissores,
+                df_detalhes_boletas_pre_trading_enquadramento_grupo_economico
+            )
+
+        call_bases(refdate)
+
+        df_boletas_pre_trade = set_df_boletas_pre_trade(refdate)
+
+        set_enquadramento_df_carteira_d0(refdate, df_boletas_pre_trade)
+
+        (
+            self.df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite,
+            self.df_detalhes_boletas_pre_trading_enquadramento_emissores,
+            self.df_detalhes_boletas_pre_trading_enquadramento_grupo_economico,
+        ) = set_detalhamento_boletas_pre_trading(df_boletas_pre_trade)
 
 
 class dadosRiscoFundos:

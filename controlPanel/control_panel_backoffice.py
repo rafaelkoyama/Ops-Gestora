@@ -1418,7 +1418,7 @@ class App(Window):
             
             def comando_tela_cadastro():
                 self.sistema_cadastro = TelaCadastro(
-                    self, manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools, logger=self.logger)
+                    self, manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools)
 
             self.menu_ferramentas = newMenuButton(self.frame_menu, text='Ferramentas', bootstyle="light")
             self.menu_ferramentas.grid(row=0, column=2, padx=0, pady=0)

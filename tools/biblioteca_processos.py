@@ -1727,15 +1727,9 @@ class capturaDados:
 
     def __init__(self, manager_sql=None, funcoes_pytools=None):
 
-        if manager_sql is None:
-            self.manager_sql = SQL_Manager()
-        else:
-            self.manager_sql = manager_sql
+        self.manager_sql = manager_sql if manager_sql is not None else SQL_Manager()
 
-        if funcoes_pytools is None:
-            self.funcoes_pytools = FuncoesPyTools(self.manager_sql)
-        else:
-            self.funcoes_pytools = funcoes_pytools
+        self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
 
         self.logger = Logger(manager_sql=self.manager_sql, original_script=SCRIPT_NAME)
         self.logger.info(log_message="class - capturaDados - Iniciado")
@@ -1780,3 +1774,14 @@ class capturaDados:
         except Exception as e:
             self.logger.error(log_message=f"capturaDados - baseB3NegociosBalcaoRendaFixa - {str(e)}")
             raise
+
+    def lastRefdateCarteira(self, fundo: str, refdate: date = None) -> date:
+
+        try:
+            max_refdate = self.manager_sql.select_dataframe(
+                "SELECT MAX(REFDATE) AS MAX_REFDATE FROM TB_CARTEIRAS "
+                f"WHERE REFDATE < '{refdate}' AND FUNDO = '{fundo}'")['MAX_REFDATE'][0]
+            return max_refdate
+        except Exception as e:
+            self.logger.error(log_message=f"capturaDados - lastRefdateCarteira - {str(e)}")
+            return None

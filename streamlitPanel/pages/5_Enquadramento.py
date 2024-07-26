@@ -1,26 +1,28 @@
-from __init__ import *
-
-VERSION_APP = "1.0.0"
-VERSION_REFDATE = "2024-07-10"
-ENVIRONMENT = os.getenv("ENVIRONMENT")
-SCRIPT_NAME = os.path.basename(__file__)
-
-if ENVIRONMENT == "DEVELOPMENT":
-    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
-
-append_paths()
-
-# -----------------------------------------------------------------------
-
 from datetime import date
 from io import BytesIO
 
 import pandas as pd
 import streamlit as st
+from __init__ import *  # noqa: F403
 
-from risco.relatoriosRisco import enquadramentoCarteira
-from tools.db_helper import SQL_Manager
-from tools.py_tools import FuncoesPyTools
+append_paths()  # noqa: F405
+
+from risco.relatoriosRisco import enquadramentoCarteira  # noqa: E402
+from tools.db_helper import SQL_Manager  # noqa: E402
+from tools.py_tools import FuncoesPyTools  # noqa: E402
+
+# -------------------------------------------------------------------------------------------------------
+
+VERSION_APP = "1.0.0"
+VERSION_REFDATE = "2024-07-10"
+ENVIRONMENT = os.getenv("ENVIRONMENT")  # noqa: F405
+SCRIPT_NAME = os.path.basename(__file__)  # noqa: F405
+
+if ENVIRONMENT == "DEVELOPMENT":
+    print(f"{SCRIPT_NAME.upper()} - {ENVIRONMENT} - {VERSION_APP} - {VERSION_REFDATE}")
+
+# -------------------------------------------------------------------------------------------------------
+
 
 if "manager_sql" not in st.session_state:
     st.session_state.manager_sql = SQL_Manager()
@@ -68,7 +70,7 @@ def LogoStrix():
     with st.container():
         col1, col2, col3 = st.columns([1, 2, 0.01])
         col2.image(
-            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # type: ignore
+            os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # noqa: F405  # type: ignore
             width=500,
         )
 

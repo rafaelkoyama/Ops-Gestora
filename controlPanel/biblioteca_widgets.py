@@ -1,10 +1,8 @@
-VERSION = "1.0.1"
-
 from ttkbootstrap import BooleanVar, Menu, StringVar, Toplevel
-from ttkbootstrap.constants import *
-from ttkbootstrap.dialogs.dialogs import Messagebox, Querybox
+from ttkbootstrap.constants import *  # noqa: F403, F405, E402, F401
+from ttkbootstrap.dialogs.dialogs import Messagebox
 from ttkbootstrap.scrolled import ScrolledText
-from ttkbootstrap.tableview import Tableview
+from ttkbootstrap.tableview import Tableview  # noqa: F403, F405, E402, F401
 from ttkbootstrap.tooltip import ToolTip
 from ttkbootstrap.widgets import (
     Button,
@@ -20,6 +18,10 @@ from ttkbootstrap.widgets import (
     Radiobutton,
     Spinbox,
 )
+
+# -------------------------------------------------------------------------------------------------------
+
+VERSION = "1.0.1"
 
 
 class newLabelFrame(Labelframe):
