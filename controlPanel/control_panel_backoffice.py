@@ -934,6 +934,8 @@ class ProcessManager:
 
                 if self.driver is not None:
 
+                    print(f"Driver --> {self.driver}")
+
                     if self.app.opt_check_btn_curvas_b3.get():
                         self.upload_curvasB3()
 
@@ -1333,7 +1335,7 @@ class AutoProcessManager():
 class App(Window):
 
     def __init__(self):
-        super().__init__(themename='vapor')
+        super().__init__(themename='cyborg')
 
         self.lista_processos_app = ['INDEXADORES_CDI_SELIC']
 
