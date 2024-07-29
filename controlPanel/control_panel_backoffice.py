@@ -934,6 +934,8 @@ class ProcessManager:
 
                 if self.driver is not None:
 
+                    print(f"Driver --> {self.driver}")
+
                     if self.app.opt_check_btn_curvas_b3.get():
                         self.upload_curvasB3()
 
