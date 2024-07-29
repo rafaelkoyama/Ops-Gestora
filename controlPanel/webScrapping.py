@@ -477,10 +477,7 @@ class dadosB3():
             script_original=SCRIPT_NAME
         )
 
-        if ENVIRONMENT == "DEVELOPMENT":
-            self.tb_indexadores = 'TB_INDEXADORES_TESTE'
-        else:
-            self.tb_indexadores = 'TB_INDEXADORES'
+        self.tb_indexadores = 'TB_INDEXADORES'
 
         self.str_url = (
             "http://estatisticas.cetip.com.br/astec/series_v05/paginas/lum_web_v05_template_informacoes_di.asp?"
@@ -652,7 +649,7 @@ class dadosB3():
             self.manager_sql.insert_dataframe(df_selic_d0, self.tb_indexadores)
             self.result_scrapping_cdi_selic_b3['SELIC'] = "Upload ok!"
 
-    def check_sql_uploaded(self):
+    def check_if_sql_uploaded(self):
 
         str_cdi_selic = "'CDI', 'SELIC'"
 
@@ -672,31 +669,31 @@ class dadosB3():
 
         self.set_refdate(refdate)
 
-        check_sql_uploaded = self.check_sql_uploaded()
+        # check_sql_uploaded = self.check_if_sql_uploaded()
 
-        if check_sql_uploaded is not True:
+        # if check_sql_uploaded is not True:
 
-            if p_webdriver is None:
-                self.open_edge()
-            else:
-                self.driver = p_webdriver
-
-            self.result_scrapping_cdi_selic_b3 = {}
-
-            if self.check_last_date_cdi_selic_b3(manual_check=False):
-                self.scrapping_cdi_selic_b3()
-                if p_webdriver is None:
-                    self.driver.quit()
-                self.upload_cdi_b3()
-                self.upload_selic_b3()
-            else:
-                if p_webdriver is None:
-                    self.driver.quit()
-                self.result_scrapping_cdi_selic_b3['Scrapping'] = (
-                    f"{self.funcoes_pytools.convert_data_sql(self.refdate)} não disponível na B3")
-            return self.result_scrapping_cdi_selic_b3
+        if p_webdriver is None:
+            self.open_edge()
         else:
-            return 'all_uploaded'
+            self.driver = p_webdriver
+
+        self.result_scrapping_cdi_selic_b3 = {}
+
+        if self.check_last_date_cdi_selic_b3(manual_check=False):
+            self.scrapping_cdi_selic_b3()
+            if p_webdriver is None:
+                self.driver.quit()
+            self.upload_cdi_b3()
+            self.upload_selic_b3()
+        else:
+            if p_webdriver is None:
+                self.driver.quit()
+            self.result_scrapping_cdi_selic_b3['Scrapping'] = (
+                f"{self.funcoes_pytools.convert_data_sql(self.refdate)} não disponível na B3")
+        return self.result_scrapping_cdi_selic_b3
+        # else:
+            # return 'all_uploaded'
 
 
 class agendaDebenturesAnbima():

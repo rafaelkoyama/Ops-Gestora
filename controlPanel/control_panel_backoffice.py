@@ -179,10 +179,7 @@ class ProcessManager:
 
         super().__init__()
 
-        if ENVIRONMENT == "DEVELOPMENT":
-            self.tb_indexadores = 'TB_INDEXADORES_TESTE'
-        else:
-            self.tb_indexadores = 'TB_INDEXADORES'
+        self.tb_indexadores = 'TB_INDEXADORES'
 
         self.app = app
 
@@ -820,21 +817,10 @@ class ProcessManager:
 
     def captura_cdi_selic_b3(self):
 
-        def check_if_temp():
+        def upload_cdi_selic_temp():
 
-            if self.manager_sql.select_dataframe(
-                    f"SELECT STATUS FROM TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS "
-                    f"WHERE PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")['STATUS'][0] == 0:
-
-                self.manager_sql.delete_records(
-                    self.tb_indexadores,
-                    f"REFDATE = '{self.refdate_upload_outras_bases}' AND INDEXADOR IN ('CDI', 'SELIC')")
-
-        def check_if_need_temp():
-
-            if self.manager_sql.select_dataframe(
-                    f"SELECT STATUS FROM TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS "
-                    f"WHERE PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")['STATUS'][0] == 0:
+            if not self.manager_sql.check_if_data_exists(
+                    f"SELECT INDEXADOR FROM TB_INDEXADORES WHERE INDEXADOR = 'CDI' AND REFDATE = '{self.refdate_upload_outras_bases}'"):
 
                 dmenos1 = self.funcoes_pytools.workday_br(self.refdate_upload_outras_bases, -1)
 
@@ -867,45 +853,52 @@ class ProcessManager:
 
                 self.manager_sql.insert_dataframe(pd.DataFrame(data), self.tb_indexadores)
 
-                return True
-            else:
-                return False
-
         self.window_status_outras_bases.text_box.insert("end", "Captura CDI & SELIC B3\n")
-
-        check_if_temp()
 
         result = self.dadosB3.run_scrapping_cdi_selic_b3(
             refdate=self.refdate_upload_outras_bases,
             p_webdriver=self.driver)
 
-        if result == 'all_uploaded':
-            self.window_status_outras_bases.text_box.insert("end", "  Já baixados anteriormente.\n\n")
+        if 'Scrapping' in result.keys():
+            upload_cdi_selic_temp()
+            self.window_status_outras_bases.text_box.insert("end", "  Upload CDI e SELIC temporários.\n")
         else:
             for dado in result:
                 self.window_status_outras_bases.text_box.insert("end", f"  {dado}: {result[dado]}\n")
 
-            if self.manager_sql.check_if_data_exists(
-                    f"SELECT * FROM TB_INDEXADORES WHERE REFDATE = '{self.refdate_upload_outras_bases}' AND INDEXADOR = 'CDI'"):
-                self.manager_sql.update_table(
-                    table_name="TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS",
-                    column_with_data_to_update="STATUS = '1'",
-                    column_with_condition=f"PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")
+            self.manager_sql.update_table(
+                table_name="TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS",
+                column_with_data_to_update="STATUS = '1'",
+                column_with_condition=f"PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")
 
-            if check_if_need_temp():
-                self.window_status_outras_bases.text_box.insert("end", "  Upload CDI e SELIC temporários.\n")
+        self.window_status_outras_bases.text_box.insert("end", "\n")
 
-            self.window_status_outras_bases.text_box.insert("end", "\n")
+    def need_driver(self):
 
-    def check_if_need_upload_bases_b3(self):
+        def is_temp_values_cdi_selic():
+
+            status_refdate_controle = self.manager_sql.select_dataframe(
+                f"SELECT [STATUS] FROM TB_AUX_CONTROL_PANEL_CONTROLE_PROCESSOS "
+                f"WHERE PROCESSO = 'INDEXADORES_CDI_SELIC' AND REFDATE = '{self.refdate_upload_outras_bases}'")['STATUS'][0]
+
+            if status_refdate_controle == 1:
+                return False
+            else:
+                return True
 
         self.curvasb3.set_refdate(self.refdate_upload_outras_bases)
         self.dadosB3.set_refdate(self.refdate_upload_outras_bases)
 
-        if self.curvasb3.check_sql_uploaded() is not True or self.dadosB3.check_sql_uploaded() is not True:
+        if self.curvasb3.check_sql_uploaded() is not True:
             return True
-        else:
-            return False
+
+        if self.dadosB3.check_if_sql_uploaded() is not True:
+            return True
+
+        if is_temp_values_cdi_selic():
+            return True
+
+        return False
 
     def processos_outras_bases(self):
 
@@ -925,16 +918,10 @@ class ProcessManager:
 
             if self.app.opt_check_btn_curvas_b3.get() or self.app.opt_check_btn_cdi_selic_b3.get():
 
-                check_need_driver = self.check_if_need_upload_bases_b3()
+                need_driver = self.need_driver()
 
-                if check_need_driver:
+                if need_driver:
                     self.driver = openEdgeDriver().driver
-                else:
-                    self.driver = None
-
-                if self.driver is not None:
-
-                    print(f"Driver --> {self.driver}")
 
                     if self.app.opt_check_btn_curvas_b3.get():
                         self.upload_curvasB3()
@@ -942,11 +929,7 @@ class ProcessManager:
                     if self.app.opt_check_btn_cdi_selic_b3.get():
                         self.captura_cdi_selic_b3()
 
-                    if check_need_driver:
-                        self.driver.quit()
-
-                else:
-                    self.window_status_outras_bases.text_box.insert("end", "Driver web falhou.\n")
+                    self.driver.quit()
 
             self.window_status_outras_bases.text_box.insert("end", "Processos finalizados.\n")
             self.window_status_outras_bases.status_running = False
