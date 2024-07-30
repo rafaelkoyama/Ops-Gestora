@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from io import BytesIO  # noqa: F403, F405, E402, F401
 
 import pandas as pd
@@ -107,7 +107,8 @@ if select_periodo == "Mensal":
     list_refdate = [x.strftime('%Y-%m-%d') for x in list_refdate]
 
 else:
-    list_refdate = [st.sidebar.selectbox(label="Refdate", options=[x.strftime('%Y-%m-%d') for x in df_refdates.tolist()], index=len(df_refdates) - 1)]
+    list_refdate = [st.sidebar.selectbox(
+        label="Refdate", options=[x.strftime('%Y-%m-%d') for x in df_refdates.tolist()], index=len(df_refdates) - 1)]
 
 
 st.sidebar.divider()
@@ -165,7 +166,7 @@ if st.session_state["enquadramento_boletas_pre_trading"] is True:
                     f"{df_emissor_ativo['Limite Individual'][0] * 100:,.0f}%",
                     df_emissor_ativo['Status Enquadramento'][0]],
                 "Exposição Grupo Econômico": [
-                    f"{df_grupo_economico_ativo['Exposição Dm1'][0] * 100:,.2f}%" if pd.notna(df_grupo_economico_ativo['Exposição Dm1'][0]) else '--',
+                    f"{df_grupo_economico_ativo['Exposição Dm1'][0] * 100:,.2f}%" if pd.notna(df_grupo_economico_ativo['Exposição Dm1'][0]) else '--',  # noqa: E501
                     f"{df_grupo_economico_ativo['Exposição'][0] * 100:,.2f}%",
                     f"{df_grupo_economico_ativo['Limite Individual'][0] * 100:,.0f}%",
                     df_grupo_economico_ativo['Status Enquadramento'][0]],
