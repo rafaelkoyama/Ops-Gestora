@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from io import BytesIO  # noqa: F403, F405, E402, F401
 
 import pandas as pd
@@ -43,7 +43,7 @@ if "tabela_transpose_html" not in st.session_state:
     st.session_state.tabela_transpose_html = tabelasHTML.df_to_transpose_html
 
 st.set_page_config(
-    page_title="Strix Capital - Painel de Controle",
+    page_title="Strix Capital - Pré Trade",
     page_icon="🦉",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -72,7 +72,7 @@ def select_state(select):
 
 def LogoStrix():
     with st.container():
-        col1, col2, col3 = st.columns([1, 2, 0.1])
+        col1, col2, col3 = st.columns([1.4, 2, 0.1])
         col2.image(
             os.path.join(base_path, "streamlitPanel", "static", "logotipo_strix.png"),  # noqa: F403, F405, E402  # type: ignore
             width=350,
@@ -80,93 +80,142 @@ def LogoStrix():
     st.divider()
 
 
-if st.session_state.logo_pre_trading:
-    LogoStrix()
+def lists_suporte_refdate_month_year():
 
-refdate = st.sidebar.date_input("Refdate", value=date.today(), format="DD/MM/YYYY", on_change=desliga_states)
+    df_refdates = st.session_state.manager_sql.select_dataframe(
+        "SELECT DISTINCT TRADE_DATE FROM TB_BOLETAS_PRE_TRADING ORDER BY TRADE_DATE")
+    df_refdates['month_year'] = df_refdates['TRADE_DATE'].apply(lambda x: x.strftime('%m/%Y'))
+
+    df = df_refdates['TRADE_DATE'].copy()
+
+    df = pd.to_datetime(df)
+
+    return df, df_refdates['month_year'].unique().tolist()
+
+
+df_refdates, list_month_year = lists_suporte_refdate_month_year()
+
+select_periodo = st.sidebar.selectbox(label="Tipo Período", options=["Diário", "Mensal"], index=1)
+
+if select_periodo == "Mensal":
+    select_month_year = st.sidebar.selectbox(label="Mês-Ano", options=list_month_year, index=len(list_month_year) - 1)
+
+    report_month = int(select_month_year.split("/")[0])
+    report_year = int(select_month_year.split("/")[1])
+
+    list_refdate = df_refdates[(df_refdates.dt.month == report_month) & (df_refdates.dt.year == report_year)].tolist()
+    list_refdate = [x.strftime('%Y-%m-%d') for x in list_refdate]
+
+else:
+    list_refdate = [st.sidebar.selectbox(label="Refdate", options=[x.strftime('%Y-%m-%d') for x in df_refdates.tolist()], index=len(df_refdates) - 1)]
+
 
 st.sidebar.divider()
 
-st.sidebar.button(
-    "Executar",
-    use_container_width=True,
-    on_click=lambda: select_state("enquadramento_boletas_pre_trading"),
-)
+select_state("enquadramento_boletas_pre_trading")
 
 if st.session_state["enquadramento_boletas_pre_trading"] is True:
+
     st.session_state.logo_pre_trading = False
     LogoStrix()
 
-    def captura_lista_hist_ativos():
-        max_refdate = st.session_state.capturaDados.lastRefdateCarteira(fundo="Strix Yield Master", refdate=refdate)
+    for refdate in list_refdate:
 
-        lista_ativos_hist = st.session_state.manager_sql.select_dataframe(
-            "SELECT DISTINCT ATIVO FROM TB_CARTEIRAS "
-            f"WHERE REFDATE = '{max_refdate}' AND TIPO_ATIVO NOT IN ('Provisões & Despesas')")['ATIVO'].tolist()
+        def captura_lista_hist_ativos():
+            max_refdate = st.session_state.capturaDados.lastRefdateCarteira(fundo="Strix Yield Master", refdate=refdate)
 
-        return lista_ativos_hist
+            lista_ativos_hist = st.session_state.manager_sql.select_dataframe(
+                "SELECT DISTINCT ATIVO FROM TB_CARTEIRAS "
+                f"WHERE REFDATE = '{max_refdate}' AND TIPO_ATIVO NOT IN ('Provisões & Despesas')")['ATIVO'].tolist()
 
-    st.session_state.enquadramento.call_enquadramento_pre_trading(refdate)
+            return lista_ativos_hist
 
-    df_boletas_pre_trading = st.session_state.manager_sql.select_dataframe(
-        "SELECT ATIVO, SUM(QUANTIDADE) AS QUANTIDADE, SUM(QUANTIDADE * PU) AS FINANCEIRO FROM TB_BOLETAS_PRE_TRADING "
-        f"WHERE TRADE_DATE = '{refdate}' GROUP BY ATIVO")
+        def get_dfs_bases():
 
-    df_modalidade = st.session_state.enquadramento.df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite
-    df_grupo_economico = st.session_state.enquadramento.df_detalhes_boletas_pre_trading_enquadramento_grupo_economico
-    df_emissor = st.session_state.enquadramento.df_detalhes_boletas_pre_trading_enquadramento_emissores
+            st.session_state.enquadramento.call_enquadramento_pre_trading(refdate)
 
-    lista_ativos_hist = captura_lista_hist_ativos()
+            df_boletas_pre_trading = st.session_state.manager_sql.select_dataframe(
+                "SELECT ATIVO, SUM(QUANTIDADE) AS QUANTIDADE, SUM(QUANTIDADE * PU) AS FINANCEIRO FROM TB_BOLETAS_PRE_TRADING "
+                f"WHERE TRADE_DATE = '{refdate}' GROUP BY ATIVO")
 
-    ativos = pd.concat([df_modalidade['ATIVO'], df_grupo_economico['ATIVO'], df_emissor['ATIVO'], df_boletas_pre_trading['ATIVO']]).unique()
+            df_modalidade = st.session_state.enquadramento.df_detalhes_boletas_pre_trading_modalidade_ativos_com_limite
+            df_grupo_economico = st.session_state.enquadramento.df_detalhes_boletas_pre_trading_enquadramento_grupo_economico
+            df_emissor = st.session_state.enquadramento.df_detalhes_boletas_pre_trading_enquadramento_emissores
 
-    st.subheader(f"Pré-Trade - {refdate.strftime('%d/%m/%Y')}")
+            return df_boletas_pre_trading, df_modalidade, df_grupo_economico, df_emissor
 
-    for ativo in ativos:
+        def get_dfs_html(df_modalidade_ativo, df_grupo_economico_ativo, df_emissor_ativo, df_boletas_pre_trading_ativo):
 
-        df_modalidade_ativo = df_modalidade[df_modalidade['ATIVO'] == ativo].copy()
-        df_grupo_economico_ativo = df_grupo_economico[df_grupo_economico['ATIVO'] == ativo].copy()
-        df_emissor_ativo = df_emissor[df_emissor['ATIVO'] == ativo].copy()
-        df_boletas_pre_trading_ativo = df_boletas_pre_trading[df_boletas_pre_trading['ATIVO'] == ativo].copy()
+            df_info_ativo = pd.DataFrame({
+                "Ativo": [ativo],
+                "Emissor": [df_emissor_ativo['EMISSOR'][0]],
+                "Grupo Econômico": [df_emissor_ativo['GRUPO_ECONOMICO'][0]],
+                "Modalidade Ativo": [
+                    "Não se encaixa" if pd.isna(
+                        df_modalidade_ativo['Modalidade Enquadramento'][0]) else df_modalidade_ativo['Modalidade Enquadramento'][0]],
+                "Volume Pré-Trade": [f"R$ {df_boletas_pre_trading_ativo['FINANCEIRO'][0]:,.2F}"],
+                "Ativo Novo": ["Sim" if ativo not in lista_ativos_hist else "Não"]
+            })
 
-        df_info_ativo = pd.DataFrame({
-            "Ativo": [ativo],
-            "Emissor": [df_emissor_ativo['EMISSOR'][0]],
-            "Grupo Econômico": [df_emissor_ativo['GRUPO_ECONOMICO'][0]],
-            "Modalidade Ativo": [
-                "Não se encaixa" if pd.isna(
-                    df_modalidade_ativo['Modalidade Enquadramento'][0]) else df_modalidade_ativo['Modalidade Enquadramento'][0]],
-            "Volume Pré-Trade": [f"R$ {df_boletas_pre_trading_ativo['FINANCEIRO'][0]:,.2F}"],
-            "Ativo Novo": ["Sim" if ativo not in lista_ativos_hist else "Não"]
-        })
+            df_exposicao = pd.DataFrame({
+                "": ['Antes Pré-Trade', 'Após Pré-Trade', 'Limite', 'Status'],
+                "Exposição Emissor": [
+                    f"{df_emissor_ativo['Exposição Dm1'][0] * 100:,.2f}%" if pd.notna(df_emissor_ativo['Exposição Dm1'][0]) else '--',
+                    f"{df_emissor_ativo['Exposição'][0] * 100:,.2f}%",
+                    f"{df_emissor_ativo['Limite Individual'][0] * 100:,.0f}%",
+                    df_emissor_ativo['Status Enquadramento'][0]],
+                "Exposição Grupo Econômico": [
+                    f"{df_grupo_economico_ativo['Exposição Dm1'][0] * 100:,.2f}%" if pd.notna(df_grupo_economico_ativo['Exposição Dm1'][0]) else '--',
+                    f"{df_grupo_economico_ativo['Exposição'][0] * 100:,.2f}%",
+                    f"{df_grupo_economico_ativo['Limite Individual'][0] * 100:,.0f}%",
+                    df_grupo_economico_ativo['Status Enquadramento'][0]],
+                "Exposição Modalidade": [
+                    "Não se encaixa" if pd.isna(
+                        df_modalidade_ativo['Exposição Dm1'][0]) else f"{df_modalidade_ativo['Exposição Dm1'][0] * 100:,.2f}%",
+                    "Não se encaixa" if pd.isna(
+                        df_modalidade_ativo['Exposição'][0]) else f"{df_modalidade_ativo['Exposição'][0] * 100:,.2f}%",
+                    "Não se encaixa" if pd.isna(
+                        df_modalidade_ativo['Limite Individual'][0]) else f"{df_modalidade_ativo['Limite Individual'][0] * 100:,.2f}%",
+                    "Não se encaixa" if pd.isna(
+                        df_modalidade_ativo['Status Enquadramento'][0]) else df_modalidade_ativo['Status Enquadramento'][0]
+                ]
+            })
 
-        df_exposicao = pd.DataFrame({
-            "": ['Antes Pré-Trade', 'Após Pré-Trade', 'Limite', 'Status'],
-            "Exposição Emissor": [
-                f"{df_emissor_ativo['Exposição Dm1'][0] * 100:,.2f}%",
-                f"{df_emissor_ativo['Exposição'][0] * 100:,.2f}%",
-                f"{df_emissor_ativo['Limite Individual'][0] * 100:,.0f}%",
-                df_emissor_ativo['Status Enquadramento'][0]],
-            "Exposição Grupo Econômico": [
-                f"{df_grupo_economico_ativo['Exposição Dm1'][0] * 100:,.2f}%",
-                f"{df_grupo_economico_ativo['Exposição'][0] * 100:,.2f}%",
-                f"{df_grupo_economico_ativo['Limite Individual'][0] * 100:,.0f}%",
-                df_grupo_economico_ativo['Status Enquadramento'][0]],
-            "Exposição Modalidade": [
-                "Não se encaixa" if pd.isna(
-                    df_modalidade_ativo['Exposição Dm1'][0]) else f"{df_modalidade_ativo['Exposição Dm1'][0] * 100:,.2f}%",
-                "Não se encaixa" if pd.isna(
-                    df_modalidade_ativo['Exposição'][0]) else f"{df_modalidade_ativo['Exposição'][0] * 100:,.2f}%",
-                "Não se encaixa" if pd.isna(
-                    df_modalidade_ativo['Limite Individual'][0]) else f"{df_modalidade_ativo['Limite Individual'][0] * 100:,.2f}%",
-                "Não se encaixa" if pd.isna(
-                    df_modalidade_ativo['Status Enquadramento'][0]) else df_modalidade_ativo['Status Enquadramento'][0]
-            ]
-        })
+            df_info_ativo_html = st.session_state.tabela_transpose_html(df_info_ativo, width=20)
+            df_exposicao_html = st.session_state.tabela_normal_html(df_exposicao, width=30, align_text="center")
 
-        df_info_ativo_html = st.session_state.tabela_transpose_html(df_info_ativo, width=20)
-        df_exposicao_html = st.session_state.tabela_normal_html(df_exposicao, width=30, align_text="center")
+            return df_info_ativo_html, df_exposicao_html
 
-        with st.container(border=True):
-            st.html(df_info_ativo_html)
-            st.html(df_exposicao_html)
+        lista_ativos_hist = captura_lista_hist_ativos()
+
+        df_boletas_pre_trading, df_modalidade, df_grupo_economico, df_emissor = get_dfs_bases()
+
+        ativos = pd.concat([
+            df_modalidade['ATIVO'],
+            df_grupo_economico['ATIVO'],
+            df_emissor['ATIVO'],
+            df_boletas_pre_trading['ATIVO']
+        ]).unique()
+
+        st.subheader(datetime.strptime(refdate, '%Y-%m-%d').strftime('%d/%m/%Y'))
+
+        for ativo in ativos:
+
+            df_modalidade_ativo = df_modalidade[df_modalidade['ATIVO'] == ativo].copy()
+            df_grupo_economico_ativo = df_grupo_economico[df_grupo_economico['ATIVO'] == ativo].copy()
+            df_emissor_ativo = df_emissor[df_emissor['ATIVO'] == ativo].copy()
+            df_boletas_pre_trading_ativo = df_boletas_pre_trading[df_boletas_pre_trading['ATIVO'] == ativo].copy()
+
+            df_info_ativo_html, df_exposicao_html = get_dfs_html(
+                df_modalidade_ativo,
+                df_grupo_economico_ativo,
+                df_emissor_ativo,
+                df_boletas_pre_trading_ativo
+            )
+
+            with st.container(border=True):
+                st.html(df_info_ativo_html)
+                st.html(df_exposicao_html)
+
+if st.session_state.logo_pre_trading:
+    LogoStrix()
