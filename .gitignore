@@ -4,3 +4,7 @@
 Testes/
 sync_to_production.sh
 .prettierrc
+scripts_resume.py
+scripts_analysis.xlsx
+scripts_analysis_with_functions.xlsx
+class_usage_analysis.xlsx
