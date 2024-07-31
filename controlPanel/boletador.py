@@ -53,7 +53,7 @@ class BoletadorAPP(Window if __name__ == "__main__" else Toplevel):
 
     def __init__(self, app=None, manager_sql=None, funcoes_pytools=None, *args, **kwargs):
         if isinstance(self, Window):
-            super().__init__(themename='vapor', *args, **kwargs)
+            super().__init__(themename='cyborg', *args, **kwargs)
         else:
             super().__init__(*args, **kwargs)
 
@@ -83,7 +83,6 @@ class BoletadorAPP(Window if __name__ == "__main__" else Toplevel):
 
         self.config_app()
         self.config_menu()
-        BoletadorBTG(app=self, manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools)
         self.mainloop()
 
     def on_close(self):
@@ -142,186 +141,6 @@ class BoletadorAPP(Window if __name__ == "__main__" else Toplevel):
                 command=lambda: BoletadorBTG(app=self, manager_sql=self.manager_sql, funcoes_pytools=self.funcoes_pytools))
 
         menu_tela()
-
-
-class BoletadorBTG:
-
-    def __init__(self, app=None, manager_sql=None, funcoes_pytools=None):
-
-        self.app = app
-
-        self.manager_sql = manager_sql
-        self.funcoes_pytools = funcoes_pytools
-
-        self.lista_fundos = self.app.lista_fundos
-        self.lista_tipo_ativos = self.app.lista_tipo_ativos
-
-        # self.process_manager = ProcessManagerBTG(
-        #     app=self,
-        #     manager_sql=self.manager_sql,
-        #     funcoes_pytools=self.funcoes_pytools)
-        
-        self.set_refdate()
-        self.frame_body()
-        self.labelFrames()
-        self.grid_labelFrames()
-        self.widgets()
-        self.grid_widgets()
-
-        self.process_manager = ProcessManagerBTG(
-            app=self,
-            manager_sql=self.manager_sql,
-            funcoes_pytools=self.funcoes_pytools)
-
-
-
-        self.app.geometry("1090x850")
-
-    def set_refdate(self):
-
-        self.refdate = date.today()
-        self.app.set_refdate(self.refdate)
-
-    def frame_body(self):
-
-        self.app.frame_body.destroy()
-
-        self.app.frame_body = newFrame(self.app)
-        self.app.frame_body.grid(row=2, column=0, sticky="nsew")
-        self.app.frame_body.columnconfigure(0, weight=1)
-        self.app.frame_body.rowconfigure(1, weight=1)
-
-        self.frame_body = self.app.frame_body
-
-    def labelFrames(self):
-
-        self.frame_controle = newFrame(self.frame_body)
-        self.frame_controle.grid(row=0, column=0, sticky="ew")
-        self.frame_controle.columnconfigure(0, weight=1)
-
-        self.frame_tabelas = newFrame(self.frame_body)
-        self.frame_tabelas.grid(row=1, column=0, sticky="nsew")
-        self.frame_tabelas.columnconfigure(0, weight=1)
-        self.frame_tabelas.columnconfigure(1, weight=1)
-        self.frame_tabelas.columnconfigure(2, weight=1)
-        self.frame_tabelas.rowconfigure(0, weight=1)
-        self.frame_tabelas.rowconfigure(1, weight=1)
-
-        self.frame_botoes_controle = newLabelFrame(self.frame_controle, text="Controle")
-
-        self.frame_boletas_internas = newLabelFrame(self.frame_tabelas, text="Histórico Boletas")
-        self.frame_boletas_btg = newLabelFrame(self.frame_tabelas, text="Histórico Boletas BTG")
-        self.frame_boletas_pendentes = newLabelFrame(self.frame_tabelas, text="Boletas Pendentes")
-
-    def grid_labelFrames(self):
-
-        self.frame_botoes_controle.grid(row=0, column=0, sticky="ew", padx=(10,10), pady=(10,0))
-
-        self.frame_boletas_pendentes.grid(row=0, column=0, sticky="nsew", padx=(10,0), pady=(10,0))
-        self.frame_boletas_pendentes.columnconfigure(0, weight=1)
-        self.frame_boletas_pendentes.rowconfigure(0, weight=1)
-
-        self.frame_boletas_btg.grid(row=0, column=1, sticky="nsew", padx=10, pady=(10,0), columnspan=2)
-        self.frame_boletas_btg.columnconfigure(0, weight=1)
-        self.frame_boletas_btg.rowconfigure(0, weight=1)
-
-        self.frame_boletas_internas.grid(row=1, column=0, sticky="nsew", padx=10, pady=(10,10), columnspan=3)
-        self.frame_boletas_internas.columnconfigure(0, weight=1)
-        self.frame_boletas_internas.rowconfigure(0, weight=1)
-
-    def widgets(self):
-
-        self.btn_refresh = newButton(self.frame_botoes_controle, text="Refresh", width=15)
-        self.btn_boletagem = newButton(self.frame_botoes_controle, text="Boletar", width=15)
-
-        self.tabela_boletas_internas = Tableview(
-            self.frame_boletas_internas,
-            searchable=False,
-            autofit=True,
-            paginated=False,
-            autoalign=True,
-            coldata=[
-                {"text": "ID Interno", "stretch": True},
-                {"text": "Trade Date", "stretch": True},
-                {"text": "Fundo", "stretch": True},
-                {"text": "Tipo Ativo", "stretch": True},
-                {"text": "Ativo", "stretch": True},
-                {"text": "C/V", "stretch": True},
-                {"text": "Quantidade", "stretch": True},
-                {"text": "PU", "stretch": True},
-                {"text": "Taxa", "stretch": True},
-                {"text": "Broker", "stretch": True}
-                ])
-
-        self.tabela_status_btg = Tableview(
-            self.frame_boletas_btg,
-            searchable=False,
-            autofit=True,
-            paginated=False,
-            autoalign=True,
-            coldata=[
-                {"text": "ID Interno", "stretch": True},
-                {"text": "ID BTG", "stretch": True},
-                {"text": "Status", "stretch": True},
-                {"text": "Hora Boletagem", "stretch": True}
-                ])
-
-        self.tabela_pendentes = Tableview(
-            self.frame_boletas_pendentes,
-            searchable=False,
-            autofit=True,
-            paginated=False,
-            autoalign=True,
-            coldata=[
-                {"text": "ID Interno", "stretch": True},
-                {"text": "Fundo", "stretch": True},
-                {"text": "Ativo", "stretch": True}
-                ])
-
-    def grid_widgets(self):
-
-        self.btn_refresh.grid(row=0, column=0, sticky="w", padx=(10,0), pady=(10,10))
-        self.btn_boletagem.grid(row=0, column=1, sticky="w", padx=(10,10), pady=(10,10))
-
-        self.tabela_boletas_internas.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.tabela_status_btg.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.tabela_pendentes.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-
-class ProcessManagerBTG:
-
-    def __init__(self, app=None, manager_sql=None, funcoes_pytools=None):
-
-        self.app = app
-        self.manager_sql = manager_sql
-        self.funcoes_pytools = funcoes_pytools
-
-        self.lista_fundos = self.app.app.lista_fundos
-        self.lista_tipo_ativos = self.app.app.lista_tipo_ativos
-
-        self.str_fundos = "', '".join(self.lista_fundos)
-        self.str_tipo_ativos = "', '".join(self.lista_tipo_ativos)
-
-        if ENVIRONMENT == 'DEVELOPMENT':
-            self.tb_boletas = "TB_BOLETAS_TESTE"
-        else:
-            self.tb_boletas = "TB_BOLETAS"
-
-        self.comando_boletas_internas()
-
-    def comando_boletas_internas(self):
-
-        lista_boletas = self.manager_sql.select_dataframe(
-            f"SELECT ID, TRADE_DATE, FUNDO, TIPO_ATIVO, ATIVO, C_V, QUANTIDADE, PU, TAXA, NOME_BROKER "
-            f"FROM {self.tb_boletas} WHERE TRADE_DATE = '{self.app.refdate.strftime('%Y-%m-%d')}' "
-            f"AND FUNDO IN ('{self.str_fundos}') AND TIPO_ATIVO IN ('{self.str_tipo_ativos}') "
-            f"ORDER BY ID").values.tolist()
-
-        self.app.tabela_boletas_internas.reset_table()
-        self.app.tabela_boletas_internas.delete_rows(indices=None, iids=None)
-        self.app.tabela_boletas_internas.insert_rows('end', lista_boletas)
-        self.app.tabela_boletas_internas.load_table_data()
-        self.app.tabela_boletas_internas.autoalign_columns()
-        self.app.tabela_boletas_internas.autofit_columns()
 
 
 class BoletadorInterno:
