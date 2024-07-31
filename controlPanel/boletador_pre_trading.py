@@ -62,7 +62,7 @@ class BoletadorPreTrading(Window if __name__ == "__main__" else Toplevel):
         self.funcoes_pytools = funcoes_pytools if funcoes_pytools is not None else FuncoesPyTools(self.manager_sql)
 
         self.lista_fundos = ['Strix Yield Master']
-        self.lista_tipo_ativos = ['Debênture', 'CCB', 'CDB', 'LF', 'LFSC', 'LFSN', 'LFSN-PRE']
+        self.lista_tipo_ativos = ['FIDC', 'Debênture', 'CCB', 'CDB', 'LF', 'LFSC', 'LFSN', 'LFSN-PRE']
 
         self.refdate = date.today()
 
