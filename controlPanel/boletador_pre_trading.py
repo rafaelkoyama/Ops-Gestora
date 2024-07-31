@@ -354,7 +354,7 @@ class ProcessManagerPretrading:
         self.app.entry_ativo['values'] = self.manager_sql.select_dataframe(
             f"SELECT DISTINCT ATIVO FROM TB_CADASTRO_ATIVOS "
             f"WHERE TIPO_ATIVO IN ('{self.app.tipo_ativo.get()}') "
-            f"AND DATA_VENCIMENTO >= '{self.app.refdate.strftime('%Y-%m-%d')}' ORDER BY ATIVO")['ATIVO'].tolist()
+            f"ORDER BY ATIVO")['ATIVO'].tolist()
 
     def check_quantidade(self, event):
         _ = event
